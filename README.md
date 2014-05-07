@@ -19,7 +19,8 @@ Two receive buffers
 Three Transmit Buffers
 SPI Interface with selectable CS via Arduino Sketch
 
-Supported Bit rates (Confimred with Vector CANalyzer and Peak pCAN usb) 
+Supported Bit rates (Confimred with Vector CANalyzer and Peak pCAN usb)
+
 10 kpbs; 20 kpbs; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
 
 Designed to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers. Have not tested with other Arduino ATMEL chips but it will more likely work.
