@@ -211,7 +211,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 
 // MESSAGE TRANSMISSION REGISTER BIT DEFINITIONS. 
 
-// TXBnCTRL â€“ TRANSMIT BUFFER n CONTROL REGISTER (ADDRESS: 30h, 40h, 50h)
+// TXBnCTRL – TRANSMIT BUFFER n CONTROL REGISTER (ADDRESS: 30h, 40h, 50h)
 #define ABTF		6
 #define MLOA		5
 #define TXERR		4
@@ -219,7 +219,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define TXP1		1
 #define TXP0		0
 
-// TXRTSCTRL â€“ TXnRTS PIN CONTROL AND STATUS REGISTER (ADDRESS: 0Dh)
+// TXRTSCTRL – TXnRTS PIN CONTROL AND STATUS REGISTER (ADDRESS: 0Dh)
 #define B2RTS		5
 #define B1RTS		4
 #define B0RTS		3
@@ -227,7 +227,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define B1RTSM		1
 #define B0RTSM		0
 
-// TXBnSIDH â€“ TRANSMIT BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 31h, 41h, 51h)
+// TXBnSIDH – TRANSMIT BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 31h, 41h, 51h)
 #define SID10		7
 #define SID9		6
 #define SID8		5
@@ -237,7 +237,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define SID4		1
 #define SID3		0
 
-// TXBnSIDL â€“ TRANSMIT BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 32h, 42h, 52h)
+// TXBnSIDL – TRANSMIT BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 32h, 42h, 52h)
 #define SID2		7
 #define SID1		6
 #define SID0		5
@@ -245,7 +245,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define EID17		1
 #define EID16		0
 
-// TXBnEID8 â€“ TRANSMIT BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 33h, 43h, 53h)
+// TXBnEID8 – TRANSMIT BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 33h, 43h, 53h)
 #define EID15		7
 #define EID14		6
 #define EID13		5
@@ -255,7 +255,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define EID9		1
 #define EID8		0
 
-// TXBnEID0 â€“ TRANSMIT BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 34h, 44h, 54h)
+// TXBnEID0 – TRANSMIT BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 34h, 44h, 54h)
 #define EID7		7
 #define EID6		6
 #define EID5		5
@@ -275,7 +275,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 
 // MESSAGE RECEPTION REGISTER BIT DEFINITIONS.
 
-// RXB0CTRL â€“ RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
+// RXB0CTRL – RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
 #define RXM1		6
 #define RXM0		5
 #define RXRTR		3
@@ -283,11 +283,11 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define BUKT1		1
 #define FILHIT0		0
 
-// RXB1CTRL â€“ RECEIVE BUFFER 1 CONTROL (ADDRESS: 70h). SAME AS RXB0CTRL BUT WITH THE FOLLOWING CHANGES
+// RXB1CTRL – RECEIVE BUFFER 1 CONTROL (ADDRESS: 70h). SAME AS RXB0CTRL BUT WITH THE FOLLOWING CHANGES
 #define FILHIT2		2
 #define FILHIT1		1
 
-// BFPCTRL â€“ RXnBF PIN CONTROL AND STATUS (ADDRESS: 0Ch)
+// BFPCTRL – RXnBF PIN CONTROL AND STATUS (ADDRESS: 0Ch)
 #define B1BFS		5
 #define B0BFS		4
 #define B1BFE		3
@@ -295,7 +295,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define B1BFM		1
 #define B0BFM		0
 
-// RXBnSIDH â€“ RECEIVE BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 61h, 71h)
+// RXBnSIDH – RECEIVE BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 61h, 71h)
 #define SID10		7
 #define SID9		6
 #define SID8		5
@@ -305,7 +305,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define SID4		1
 #define SID3		0
 
-// RXBnSIDL â€“ RECEIVE BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 62h, 72h)
+// RXBnSIDL – RECEIVE BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 62h, 72h)
 #define SID2		7
 #define SID1		6
 #define SID0		5
@@ -314,7 +314,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define	EID17		1		
 #define	EID16		0
 
-// RXBnEID8 â€“ RECEIVE BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 63h, 73h)
+// RXBnEID8 – RECEIVE BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 63h, 73h)
 #define	EID15		7
 #define	EID14		6
 #define	EID13		5		
@@ -324,7 +324,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define	EID9		1
 #define	EID8		0
 
-// RXBnEID0 â€“ RECEIVE BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 64h, 74h)
+// RXBnEID0 – RECEIVE BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 64h, 74h)
 #define	EID7		7
 #define	EID6		6
 #define	EID5		5		
@@ -334,7 +334,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define	EID1		1
 #define	EID0		0
 
-// RXBnDLC â€“ RECEIVE BUFFER n DATA LENGTH CODE (ADDRESS: 65h, 75h)
+// RXBnDLC – RECEIVE BUFFER n DATA LENGTH CODE (ADDRESS: 65h, 75h)
 #define	RTR			6
 #define	DLC3		3
 #define	DLC2		2
@@ -343,7 +343,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 
 // CONFIGURATION REGISTER BIT DEFINITIONS.
 
-// CNF1 â€“ CONFIGURATION 1 (ADDRESS: 2Ah)
+// CNF1 – CONFIGURATION 1 (ADDRESS: 2Ah)
 #define SJW1		7
 #define SJW0		6
 #define BRP5		5
@@ -353,7 +353,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define BRP1		1
 #define BRP0		0
 
-// CNF2 â€“ CONFIGURATION 2 (ADDRESS: 29h)
+// CNF2 – CONFIGURATION 2 (ADDRESS: 29h)
 #define BTLMODE		7
 #define SAM			6
 #define PHSEG12		5
@@ -370,7 +370,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define PHSEG21		1
 #define PHSEG20		0
 
-// CANCTRL â€“ CAN CONTROL REGISTER (ADDRESS: 0Fh)
+// CANCTRL – CAN CONTROL REGISTER (ADDRESS: 0Fh)
 #define REQOP2		7
 #define REQOP1		6
 #define REQOP0		5
@@ -380,7 +380,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define CLKPRE1		1
 #define CLKPRE0		0
 
-// CANSTAT â€“ CAN STATUS REGISTER (ADDRESS: 0Eh)
+// CANSTAT – CAN STATUS REGISTER (ADDRESS: 0Eh)
 #define OPMOD2		7
 #define OPMOD1		6
 #define OPMOD0		5
@@ -388,7 +388,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define ICOD1		2
 #define ICOD0		1
 
-// EFLG â€“ ERROR FLAG (ADDRESS: 2Dh)
+// EFLG – ERROR FLAG (ADDRESS: 2Dh)
 #define RX1OVR		7
 #define RX0OVR		6
 #define TXB0		5
@@ -398,7 +398,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define RXWAR		1
 #define EWARN		0
 
-// CANINTE â€“ INTERRUPT ENABLE (ADDRESS: 2Bh)
+// CANINTE – INTERRUPT ENABLE (ADDRESS: 2Bh)
 #define MERRE		7
 #define WAKIE		6
 #define ERRIE		5
@@ -408,7 +408,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define RX1IE		1
 #define RX0IE		0
 
-// CANINTF â€“ INTERRUPT FLAG (ADDRESS: 2Ch)
+// CANINTF – INTERRUPT FLAG (ADDRESS: 2Ch)
 #define MERRF		7
 #define WAKIF		6
 #define ERRIF		5
