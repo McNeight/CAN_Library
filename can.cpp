@@ -700,8 +700,7 @@ void MCP::read(J1939 *message)
 	digitalWrite(CS,HIGH);
 	
 	message -> DLC = len;
-	message -> rtr = (bitRead(rxbDlc,6));
-
+	
 	if (bitRead ((sid_l),3)==1) { // check to see if this is an Extended ID Msg.
 
 	temp = (sid_l & 0xE0)>>3; // keep SID0, SID1 and SID2 from SIDL
