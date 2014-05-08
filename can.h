@@ -1,8 +1,8 @@
 /* Copyright (C) 2014
 
-	Contributor:  Pedro Cevallos
+    Contributor:  Pedro Cevallos
 
-	This program is free software: you can redistribute it and/or modify
+    This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -15,12 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Acknowledgments:
-	Fabian Greif for the initial MCP2515 library http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
-	David Harding for his version of the MCP2515 library http://forum.arduino.cc/index.php/topic,8730.0.html
-	Kyle Crockett CANduino library with 16Mhz oscillator. (http://code.google.com/p/canduino/)
-	Nuno Alves for the help on Extended ID messaging
-	Stevenh for his work on library and all of the MCP research/work http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+Acknowledgments:
+Fabian Greif for the initial MCP2515 library http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
+David Harding for his version of the MCP2515 library http://forum.arduino.cc/index.php/topic,8730.0.html
+Kyle Crockett CANduino library with 16Mhz oscillator. (http://code.google.com/p/canduino/)
+Nuno Alves for the help on Extended ID messaging
+Stevenh for his work on library and all of the MCP research/work http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
 
 -------------------------------------------------------------------------------------------------------------
 Change Log
@@ -29,7 +29,8 @@ DATE		VER		WHO			WHAT
 07/07/13	0.1		PC		Modified and merge all MCP2515 libraries found. Stripped away most unused fuctions and corrected MCP2515 defs
 09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
-05/01/14	0.4		PC		Cleaned up fuctions, variables and added message structures for J1939, CANopen and CAN. 
+05/01/14	0.4		PC		Cleaned up fuctions, variables and added message structures for J1939, CANopen and CAN.
+05/07/14	1.0		PC		Released library to public through gitHub
 -------------------------------------------------------------------------------------------------------------
 
 Features:
@@ -44,7 +45,7 @@ SPI Interface
 Supported Baud rates 
 10 kpbs; 20 kpbs; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
 
-Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
+Intended to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
 */
 
 
@@ -116,8 +117,8 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define RXF5SIDL	0x19
 #define RXF5EID8	0x1A
 #define RXF5EID0	0x1B
-#define TEC			0x1C
-#define REC         0x1D
+#define TEC		0x1C
+#define REC     	0x1D
 
 #define RXM0SIDH	0x20
 #define RXM0SIDL	0x21
@@ -211,7 +212,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 
 // MESSAGE TRANSMISSION REGISTER BIT DEFINITIONS. 
 
-// TXBnCTRL – TRANSMIT BUFFER n CONTROL REGISTER (ADDRESS: 30h, 40h, 50h)
+// TXBnCTRL TRANSMIT BUFFER n CONTROL REGISTER (ADDRESS: 30h, 40h, 50h)
 #define ABTF		6
 #define MLOA		5
 #define TXERR		4
@@ -219,7 +220,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define TXP1		1
 #define TXP0		0
 
-// TXRTSCTRL – TXnRTS PIN CONTROL AND STATUS REGISTER (ADDRESS: 0Dh)
+// TXRTSCTRL TXnRTS PIN CONTROL AND STATUS REGISTER (ADDRESS: 0Dh)
 #define B2RTS		5
 #define B1RTS		4
 #define B0RTS		3
@@ -227,7 +228,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define B1RTSM		1
 #define B0RTSM		0
 
-// TXBnSIDH – TRANSMIT BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 31h, 41h, 51h)
+// TXBnSIDH TRANSMIT BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 31h, 41h, 51h)
 #define SID10		7
 #define SID9		6
 #define SID8		5
@@ -237,7 +238,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define SID4		1
 #define SID3		0
 
-// TXBnSIDL – TRANSMIT BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 32h, 42h, 52h)
+// TXBnSIDL TRANSMIT BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 32h, 42h, 52h)
 #define SID2		7
 #define SID1		6
 #define SID0		5
@@ -245,7 +246,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define EID17		1
 #define EID16		0
 
-// TXBnEID8 – TRANSMIT BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 33h, 43h, 53h)
+// TXBnEID8 TRANSMIT BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 33h, 43h, 53h)
 #define EID15		7
 #define EID14		6
 #define EID13		5
@@ -255,7 +256,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define EID9		1
 #define EID8		0
 
-// TXBnEID0 – TRANSMIT BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 34h, 44h, 54h)
+// TXBnEID0 TRANSMIT BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 34h, 44h, 54h)
 #define EID7		7
 #define EID6		6
 #define EID5		5
@@ -266,7 +267,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define EID0		0
 
 // TXBnDLC - TRANSMIT BUFFER n DATA LENGTH CODE (ADDRESS: 35h, 45h, 55h)
-#define RTR			6
+#define RTR		6
 #define DLC3		3
 #define DLC2		2
 #define DLC1		1
@@ -275,7 +276,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 
 // MESSAGE RECEPTION REGISTER BIT DEFINITIONS.
 
-// RXB0CTRL – RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
+// RXB0CTRL RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
 #define RXM1		6
 #define RXM0		5
 #define RXRTR		3
@@ -283,11 +284,11 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define BUKT1		1
 #define FILHIT0		0
 
-// RXB1CTRL – RECEIVE BUFFER 1 CONTROL (ADDRESS: 70h). SAME AS RXB0CTRL BUT WITH THE FOLLOWING CHANGES
+// RXB1CTRL RECEIVE BUFFER 1 CONTROL (ADDRESS: 70h). SAME AS RXB0CTRL BUT WITH THE FOLLOWING CHANGES
 #define FILHIT2		2
 #define FILHIT1		1
 
-// BFPCTRL – RXnBF PIN CONTROL AND STATUS (ADDRESS: 0Ch)
+// BFPCTRL RXnBF PIN CONTROL AND STATUS (ADDRESS: 0Ch)
 #define B1BFS		5
 #define B0BFS		4
 #define B1BFE		3
@@ -295,7 +296,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define B1BFM		1
 #define B0BFM		0
 
-// RXBnSIDH – RECEIVE BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 61h, 71h)
+// RXBnSIDH RECEIVE BUFFER n STANDARD IDENTIFIER HIGH (ADDRESS: 61h, 71h)
 #define SID10		7
 #define SID9		6
 #define SID8		5
@@ -305,16 +306,16 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define SID4		1
 #define SID3		0
 
-// RXBnSIDL – RECEIVE BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 62h, 72h)
+// RXBnSIDL RECEIVE BUFFER n STANDARD IDENTIFIER LOW (ADDRESS: 62h, 72h)
 #define SID2		7
 #define SID1		6
 #define SID0		5
-#define	SRR			4
-#define	IDE			3
+#define	SRR		4
+#define	IDE		3
 #define	EID17		1		
 #define	EID16		0
 
-// RXBnEID8 – RECEIVE BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 63h, 73h)
+// RXBnEID8 RECEIVE BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 63h, 73h)
 #define	EID15		7
 #define	EID14		6
 #define	EID13		5		
@@ -324,7 +325,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define	EID9		1
 #define	EID8		0
 
-// RXBnEID0 – RECEIVE BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 64h, 74h)
+// RXBnEID0 RECEIVE BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 64h, 74h)
 #define	EID7		7
 #define	EID6		6
 #define	EID5		5		
@@ -334,8 +335,8 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define	EID1		1
 #define	EID0		0
 
-// RXBnDLC – RECEIVE BUFFER n DATA LENGTH CODE (ADDRESS: 65h, 75h)
-#define	RTR			6
+// RXBnDLC RECEIVE BUFFER n DATA LENGTH CODE (ADDRESS: 65h, 75h)
+#define	RTR		6
 #define	DLC3		3
 #define	DLC2		2
 #define	DLC1		1
@@ -343,7 +344,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 
 // CONFIGURATION REGISTER BIT DEFINITIONS.
 
-// CNF1 – CONFIGURATION 1 (ADDRESS: 2Ah)
+// CNF1 CONFIGURATION 1 (ADDRESS: 2Ah)
 #define SJW1		7
 #define SJW0		6
 #define BRP5		5
@@ -353,9 +354,9 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define BRP1		1
 #define BRP0		0
 
-// CNF2 – CONFIGURATION 2 (ADDRESS: 29h)
+// CNF2 CONFIGURATION 2 (ADDRESS: 29h)
 #define BTLMODE		7
-#define SAM			6
+#define SAM		6
 #define PHSEG12		5
 #define PHSEG11		4
 #define PHSEG10		3
@@ -364,23 +365,23 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define PRSEG0		0
 
 // CNF3 - CONFIGURATION 1 (ADDRESS: 28h)
-#define SOF			7		
+#define SOF		7		
 #define WAKFIL		6
 #define PHSEG22		2
 #define PHSEG21		1
 #define PHSEG20		0
 
-// CANCTRL – CAN CONTROL REGISTER (ADDRESS: 0Fh)
+// CANCTRL CAN CONTROL REGISTER (ADDRESS: 0Fh)
 #define REQOP2		7
 #define REQOP1		6
 #define REQOP0		5
 #define ABAT		4
-#define OSM			3		
+#define OSM		3		
 #define CLKEN		2
 #define CLKPRE1		1
 #define CLKPRE0		0
 
-// CANSTAT – CAN STATUS REGISTER (ADDRESS: 0Eh)
+// CANSTAT CAN STATUS REGISTER (ADDRESS: 0Eh)
 #define OPMOD2		7
 #define OPMOD1		6
 #define OPMOD0		5
@@ -388,7 +389,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define ICOD1		2
 #define ICOD0		1
 
-// EFLG – ERROR FLAG (ADDRESS: 2Dh)
+// EFLG ERROR FLAG (ADDRESS: 2Dh)
 #define RX1OVR		7
 #define RX0OVR		6
 #define TXB0		5
@@ -398,7 +399,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define RXWAR		1
 #define EWARN		0
 
-// CANINTE – INTERRUPT ENABLE (ADDRESS: 2Bh)
+// CANINTE INTERRUPT ENABLE (ADDRESS: 2Bh)
 #define MERRE		7
 #define WAKIE		6
 #define ERRIE		5
@@ -408,7 +409,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define RX1IE		1
 #define RX0IE		0
 
-// CANINTF – INTERRUPT FLAG (ADDRESS: 2Ch)
+// CANINTF INTERRUPT FLAG (ADDRESS: 2Ch)
 #define MERRF		7
 #define WAKIF		6
 #define ERRIF		5
@@ -418,7 +419,7 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define RX1IF		1
 #define RX0IF		0
 
-//FILTER AND MASK ADDRESES.
+//FILTER AND MASK ADDRESSES.
 
 #define mask0 0x20
 #define mask1 0x24
@@ -437,54 +438,55 @@ Desgined to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 #define LISTEN		4
 #define LOOPBACK	5
 
-#define YES 1
-#define NO 0
-#define FAIL 0
-#define INIT 1
-#define ERROR 0
+//Define some responses
+#define YES 		1
+#define NO		0
+#define FAIL 		0
+#define INIT 		1
+#define ERROR 		0
 
 
 //buffer definitions
 #define buffer1		1
 #define buffer2		2
 #define buffer3		3
-#define allBuffers  0
+#define allBuffers  	0
 
-#define extID 1
-#define stdID 0
+// Standard and Extended ID defines
+#define extID 		1
+#define stdID 		0
 
 // CAN Message Structures
 typedef struct
 {
-	unsigned long ID; // Full ID
-	byte rtr; // Remote Trasnmission Request
-	byte length; // Data Length
-	byte data[8]; // Message data
+	unsigned long ID; 	// Full ID
+	byte rtr; 		// Remote Trasnmission Request
+	byte length; 		// Data Length
+	byte data[8]; 		// Message data
 } CAN;
 
 
 // J1939 Message Structures
 typedef struct
 {
-	unsigned long ID; // Full Identifier
-	byte PRIO; // Message priority
-	unsigned short PGN; //Parameter Group Number
-	byte rtr; // Remote Trasnmission Request
-	byte SA; // Source Address
-	byte DA; // Destination Address
-	byte DLC; // Data length code
-	byte data[8];// Message data
+	unsigned long ID	// Full Identifier
+	byte PRIO; 		// Message priority
+	unsigned short PGN; 	//Parameter Group Number
+	byte SA; 		// Source Address
+	byte DA; 		// Destination Address
+	byte DLC; 		// Data length code
+	byte data[8];		// Message data
 } J1939;
 
 // CANopen Message Structures
 typedef struct
 {
-	unsigned long COB_ID; // Communication object identifier
-	unsigned short FC; // Function Code
-	unsigned short NODE; // Node
-	byte rtr; // Remote Trasnmission Request
-	byte length; // Data length 
-	byte data[8]; // Message Data
+	unsigned long COB_ID; 	// Communication object identifier
+	unsigned short FC; 	// Function Code
+	unsigned short NODE; 	// Node
+	byte rtr; 		// Remote Trasnmission Request
+	byte length; 		// Data length 
+	byte data[8]; 		// Message Data
 } CANopen;
 
 
