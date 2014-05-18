@@ -273,8 +273,8 @@ void MCP::setMask(byte mask, byte data0, byte data1, byte data2, byte data3)
 	setMode(CONFIG);  
 	writeAddress(mask, data0);
 	writeAddress(mask+1, data1);
-	//writeAddress(mask+2, data2);
-	//writeAddress(mask+3, data3);
+	writeAddress(mask+2, data2);
+	writeAddress(mask+3, data3);
 	setMode(NORMAL);
 }
 
