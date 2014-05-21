@@ -469,7 +469,7 @@ typedef struct
 // J1939 Message Structures
 typedef struct
 {
-	unsigned long ID	// Full Identifier
+	unsigned long ID;	// Full Identifier
 	byte PRIO; 		// Message priority
 	unsigned short PGN; 	//Parameter Group Number
 	byte SA; 		// Source Address
