@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Acknowledgments:
+Acknowledgements:
 Fabian Greif for the initial MCP2515 library http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
 David Harding for his version of the MCP2515 library http://forum.arduino.cc/index.php/topic,8730.0.html
 Kyle Crockett CANduino library with 16Mhz oscillator. (http://code.google.com/p/canduino/)
@@ -26,11 +26,11 @@ Stevenh for his work on library and all of the MCP research/work http://modelrai
 Change Log
 
 DATE		VER		WHO			WHAT
-07/07/13	0.1		PC		Modified and merge all MCP2515 libraries found. Stripped away most unused fuctions and corrected MCP2515 defs
+07/07/13	0.1		PC		Modified and merge all MCP2515 libraries found. Stripped away most unused functions and corrected MCP2515 defs
 09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
-05/01/14	0.4		PC		Cleaned up fuctions, variables and added message structures for J1939, CANopen and CAN.
-05/07/14	1.0		PC		Released library to public through gitHub
+05/01/14	0.4		PC		Cleaned up functions, variables and added message structures for J1939, CANopen and CAN.
+05/07/14	1.0		PC		Released library to public through GitHub
 -------------------------------------------------------------------------------------------------------------
 
 Features:
@@ -43,7 +43,7 @@ Three Transmit Buffers
 SPI Interface 
 
 Supported Baud rates 
-10 kpbs; 20 kpbs; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
+10 kbps; 20 kbps; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
 
 Intended to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
 */
@@ -460,7 +460,7 @@ Intended to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-
 typedef struct
 {
 	unsigned long ID; 	// Full ID
-	byte rtr; 		// Remote Trasnmission Request
+	byte rtr; 		// Remote Transmission Request
 	byte length; 		// Data Length
 	byte data[8]; 		// Message data
 } CAN;
@@ -484,7 +484,7 @@ typedef struct
 	unsigned long COB_ID; 	// Communication object identifier
 	unsigned short FC; 	// Function Code
 	unsigned short NODE; 	// Node
-	byte rtr; 		// Remote Trasnmission Request
+	byte rtr; 		// Remote Transmission Request
 	byte length; 		// Data length 
 	byte data[8]; 		// Message Data
 } CANopen;
