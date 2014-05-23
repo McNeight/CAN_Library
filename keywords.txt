@@ -1,0 +1,31 @@
+﻿#######################################
+# Syntax Coloring Map For CAN_Library
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+CAN	KEYWORD1
+J1939 KEYWORD1
+CANopen KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+bitRate	KEYWORD2
+setMode	KEYWORD2
+reset	KEYWORD2
+readMode	KEYWORD2
+readRate	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

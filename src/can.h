@@ -1,4 +1,4 @@
-/* Copyright (C) 2014
+﻿/* Copyright (C) 2014
 
     Contributor:  Pedro Cevallos
 
@@ -40,12 +40,12 @@ CAN V2.0B
 Standard and extended data frames
 Two receive buffers
 Three Transmit Buffers
-SPI Interface 
+SPI Interface
 
-Supported Baud rates 
+Supported Baud rates
 10 kbps; 20 kbps; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
 
-Intended to be used with ATMEL ATMega328P with Arduino bootlader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
+Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
 */
 
 
@@ -513,7 +513,7 @@ class MCP
 	void clearFilters();   // clears all filters and masks 
 
 	byte readStatus(); //reads several status bits for transmit and receive functions.
-	byte readRXStatus(); //reads receive fuctions and filhits
+	byte readRXStatus(); //reads receive functions and filhits
 	
 	void loadMsg(byte buffer, unsigned long ID, byte frameType, byte length, byte *data); //Load Standard Data Frame Message into TX buffer X. Note this only load message to buffer. RTS is needed to send message
 
@@ -526,7 +526,7 @@ class MCP
 	void read(J1939 *message); //Receive and display j1939 message and allows use of the message structure for easier message handling 
 	void read(CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling 
 		
-	bool msgAvailable(); // check if message has been recieved on any of the buffers	
+	bool msgAvailable(); // check if message has been received on any of the buffers
 	
 
 	// OTHER USEFUL FUNCTIONS

@@ -1,4 +1,4 @@
-/* Copyright (C) 2014
+﻿/* Copyright (C) 2014
 
    Contributor:  Pedro Cevallos
 
@@ -40,9 +40,9 @@ CAN V2.0B
 Standard and extended data frames
 Two receive buffers
 Three Transmit Buffers
-SPI Interface 
+SPI Interface
 
-Supported Baud rates 
+Supported Baud rates
 10 kbps; 20 kbps; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
 
 Designed to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
@@ -403,7 +403,7 @@ bit 0: CANINTF.TX2IF
 */
 }
 
-//Function that reads receive fuctions and filhits
+//Function that reads receive functions and filhits
 byte MCP::readRXStatus() 
 {
 	digitalWrite(CS,LOW); 
@@ -460,7 +460,7 @@ void MCP::loadMsg(byte buffer, unsigned long ID, byte frameType, byte length, by
 		loadBuffer = LOAD_TX_BUF_2_ID;
 	}
 	
-	// Determine if this is an exteded msg
+	// Determine if this is an extended msg
 	if (frameType == extID){
 		
 	//generate id bytes before SPI write 
@@ -520,7 +520,7 @@ void MCP::enableRTSPins ()
 	writeAddress(TXRTSCTRL, writeVal);
 }
 
-// Enable interupts. The CANINTF register contains the corresponding interrupt flag bit for
+// Enable interrupts. The CANINTF register contains the corresponding interrupt flag bit for
 // each interrupt source. When an interrupt occurs, the INT pin is driven low by the MCP2515 
 // and will remain low until the interrupt is cleared by the MCU. An interrupt can not be 
 // cleared if the respective condition still prevails.
