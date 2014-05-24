@@ -486,9 +486,9 @@ class CAN_MCP2515 : public CanClass
 	void send(unsigned long ID,byte frameType, byte length,byte *data); // Load and send message. No RTS needed. 
 	
 	void read(unsigned long *ID, byte *length_out, byte *data_out); // Receive and display any message (J1939, CANopen, CAN) 
-	void read(CAN *message); //Receive and display CAN message and allows use of the message structure for easier message handling  
-	void read(J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling 
-	void read(CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling 
+	void read(CAN_DATA_FRAME *message); //Receive and display CAN message and allows use of the message structure for easier message handling  
+	void read(CAN_DATA_FRAME_J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling 
+	void read(CAN_DATA_FRAME_CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling 
 		
 	bool msgAvailable(); // check if message has been received on any of the buffers
 	

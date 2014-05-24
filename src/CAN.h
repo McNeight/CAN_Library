@@ -94,34 +94,50 @@ typedef enum
 
 typedef struct
 {
-	unsigned long ID; 	// Full ID
-	byte rtr : 1; 		// Remote Transmission Request
-	byte length : 4; 	// Data Length
-	byte data[8]; 		// Message data
-} CAN;
+	uint32_t ID : 29; 			// Identifier
+	uint8_t rtr : 1; 			// Remote Transmission Request
+	uint8_t length : 4; 		// Data Length
+	uint8_t data[8]; 			// Message data
+} CAN_DATA_FRAME;
 
-// J1939 Message Structures
+// SAE J1939 Message Structures
+// Also:
+//   ISO 11783 (ISOBUS or ISO Bus)
+//   NMEA 2000
 typedef struct
 {
-	unsigned long ID;	// Full Identifier
-	byte PRIO; 		// Message priority
-	unsigned short PGN; 	//Parameter Group Number
-	byte SA; 		// Source Address
-	byte DA; 		// Destination Address
-	byte DLC; 		// Data length code
-	byte data[8];		// Message data
-} J1939;
+	uint32_t ID : 29; 			// Identifier
+	uint8_t PRIO : 3; 		// Message priority
+	uint16_t PGN; 	// Parameter Group Number
+	uint8_t SA; 		// Source Address
+	uint8_t DA; 		// Destination Address
+	uint8_t DLC : 4; 		// Data length code
+	uint8_t data[8];		// Message data
+} CAN_DATA_FRAME_J1939;
+
 
 // CANopen Message Structures
 typedef struct
 {
-	unsigned long COB_ID; 	// Communication object identifier
-	unsigned short FC; 	// Function Code
-	unsigned short NODE; 	// Node
-	byte rtr; 		// Remote Transmission Request
-	byte length; 		// Data length 
-	byte data[8]; 		// Message Data
-} CANopen;
+	uint16_t COB_ID		: 11; 	// Communication object identifier
+	uint8_t FC			: 4;	// Function Code
+	uint8_t NODE		: 7;	// Node
+	uint8_t rtr			: 1;	// Remote Transmission Request
+	uint8_t length		: 4;	// Data Length
+	uint8_t data[8]; 			// Message data
+} CAN_DATA_FRAME_CANopen;
+
+
+// CANaerospace Message Structures
+typedef struct
+{
+	uint16_t ID : 11;
+	uint8_t NODE;
+	uint8_t TYPE;
+	uint8_t SERVICE;
+	uint8_t MESSAGE;
+	uint8_t data[4];
+} CAN_DATA_FRAME_CANaerospace;
 
 class CanClass
 {

@@ -654,7 +654,7 @@ void CAN_MCP2515::read(unsigned long *ID, byte *length_out, byte *data_out)
 }
 
 //Receive and display J1939 messages. This allows use of the message structure for easier message handling if PGN, SA and DA are needed.  
-void CAN_MCP2515::read(J1939 *message)
+void CAN_MCP2515::read(CAN_DATA_FRAME_J1939 *message)
 {
 	
 	byte len,i, buffer, status;
@@ -718,7 +718,7 @@ void CAN_MCP2515::read(J1939 *message)
 //Receive and display CANopen message. This allows use of the message structure for easier message handling if
 //communication object identifier (COB_ID), Function Code and Nodes are needed. See link for more info http://en.wikipedia.org/wiki/CANopen
 
-void CAN_MCP2515::read(CANopen *message)
+void CAN_MCP2515::read(CAN_DATA_FRAME_CANopen *message)
 {
 	
 	byte len,i, buffer, status;
@@ -760,7 +760,7 @@ void CAN_MCP2515::read(CANopen *message)
 }
 
 //Receive and display CAN message. This allows use of the message structure for easier message handling. Note: This fucntion does not allow extended frames as by default CAN is standard frames.
-void CAN_MCP2515::read(CAN *message)
+void CAN_MCP2515::read(CAN_DATA_FRAME *message)
 {
 	
 	byte len,i, buffer, status;
