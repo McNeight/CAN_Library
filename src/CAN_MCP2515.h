@@ -58,9 +58,9 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #include "CAN.h"
 
 //SPI Interface functions
-#define MCP2515_SPI_RESET 0xC0  
-#define MCP2515_SPI_READ 0x03 
-#define MCP2515_SPI_WRITE 0x02 
+#define MCP2515_SPI_RESET 0xC0
+#define MCP2515_SPI_READ 0x03
+#define MCP2515_SPI_WRITE 0x02
 #define MCP2515_SPI_READ_STATUS 0xA0
 #define MCP2515_SPI_RX_STATUS 0xB0
 #define MCP2515_SPI_BIT_MODIFY 0x05
@@ -70,7 +70,7 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define READ_RX_BUF_0_ID 0x90
 #define READ_RX_BUF_0_DATA 0x92
 #define READ_RX_BUF_1_ID 0x94
-#define READ_RX_BUF_1_DATA 0x96 
+#define READ_RX_BUF_1_DATA 0x96
 
 //SPI functions to load CAN TX Buffers
 #define LOAD_TX_BUF_0_ID 0x40
@@ -78,16 +78,16 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define LOAD_TX_BUF_1_ID 0x42
 #define LOAD_TX_BUF_1_DATA 0x43
 #define LOAD_TX_BUF_2_ID 0x44
-#define LOAD_TX_BUF_2_DATA 0x45 
+#define LOAD_TX_BUF_2_DATA 0x45
 
 //SPI functions RTS (Request to send) messages from CAN TX buffers.
 #define SEND_TX_BUF_0 0x81
 #define SEND_TX_BUF_1 0x82
-#define SEND_TX_BUF_2 0x84 
+#define SEND_TX_BUF_2 0x84
 #define SEND_ALL 0X87
 
 
-// MCP2515 CAN CONTROLLER REGISTERS. SEE MCP2515 DATASHEET SECTION 11.0 FOR FURTHER EXPLANATION 
+// MCP2515 CAN CONTROLLER REGISTERS. SEE MCP2515 DATASHEET SECTION 11.0 FOR FURTHER EXPLANATION
 // http://www.microchip.com/wwwproducts/Devices.aspx?dDocName=en010406
 
 #define RXF0SIDH	0x00
@@ -212,7 +212,7 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define RXB1D6		0x7C
 #define RXB1D7		0x7D
 
-// MESSAGE TRANSMISSION REGISTER BIT DEFINITIONS. 
+// MESSAGE TRANSMISSION REGISTER BIT DEFINITIONS.
 
 // TXBnCTRL TRANSMIT BUFFER n CONTROL REGISTER (ADDRESS: 30h, 40h, 50h)
 #define ABTF		6
@@ -314,13 +314,13 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define SID0		5
 #define	SRR		4
 #define	IDE		3
-#define	EID17		1		
+#define	EID17		1
 #define	EID16		0
 
 // RXBnEID8 RECEIVE BUFFER n EXTENDED IDENTIFIER HIGH (ADDRESS: 63h, 73h)
 #define	EID15		7
 #define	EID14		6
-#define	EID13		5		
+#define	EID13		5
 #define	EID12		4
 #define	EID11		3
 #define	EID10		2
@@ -330,7 +330,7 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 // RXBnEID0 RECEIVE BUFFER n EXTENDED IDENTIFIER LOW (ADDRESS: 64h, 74h)
 #define	EID7		7
 #define	EID6		6
-#define	EID5		5		
+#define	EID5		5
 #define	EID4		4
 #define	EID3		3
 #define	EID2		2
@@ -362,12 +362,12 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define PHSEG12		5
 #define PHSEG11		4
 #define PHSEG10		3
-#define PRSEG2		2		
+#define PRSEG2		2
 #define PRSEG1		1
 #define PRSEG0		0
 
 // CNF3 - CONFIGURATION 1 (ADDRESS: 28h)
-#define SOF		7		
+#define SOF		7
 #define WAKFIL		6
 #define PHSEG22		2
 #define PHSEG21		1
@@ -378,7 +378,7 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define REQOP1		6
 #define REQOP0		5
 #define ABAT		4
-#define OSM		3		
+#define OSM		3
 #define CLKEN		2
 #define CLKPRE1		1
 #define CLKPRE0		0
@@ -456,53 +456,53 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 // MCP class
 class CAN_MCP2515 : public CanClass
 {
-	public:
-	
-	
-	CAN_MCP2515(byte CS_Pin);// SPI CS is selectable through sketch. Allows multiple CAN channels. 
-	void begin (byte mode, int CANspeed);// Initializes CAN communications. Note it also starts SPI communications
-	void begin (int CANspeed);// Initializes CAN communications into Normal mode. Note it also starts SPI communications
-	void bitRate(int CANspeed);//sets up CAN bit rate
-	void setMode(byte mode) ;//puts CAN controller in one of five modes
-	void reset(); //CAN software reset. Also puts MCP2515 into config mode
-	byte readMode(); // reads CAN mode	
-	unsigned short readRate(); // reads CANspeed
-	
-	void writeAddress(byte address, byte value);// writes MCP2515 register addresses
-	byte readAddress(byte address); //reads MCP2515 registers
-	void modifyAddress(byte address, byte mask, byte value); // MCP2515 SPI bit modification commands
-	
-	void clearRxBuffers(); // clears all receive buffers
-	void clearTxBuffers(); // clears all receive buffers
-	void clearFilters();   // clears all filters and masks 
+  public:
 
-	byte readStatus(); //reads several status bits for transmit and receive functions.
-	byte readRXStatus(); //reads receive functions and filhits
-	
-	void loadMsg(byte buffer, unsigned long ID, byte frameType, byte length, byte *data); //Load Standard Data Frame Message into TX buffer X. Note this only load message to buffer. RTS is needed to send message
 
-	void sendTx(byte buffer); //(RTS) Request to send individual TX buffers or all 
-		
-	void send(unsigned long ID,byte frameType, byte length,byte *data); // Load and send message. No RTS needed. 
-	
-	void read(unsigned long *ID, byte *length_out, byte *data_out); // Receive and display any message (J1939, CANopen, CAN) 
-	void read(CAN_DATA_FRAME *message); //Receive and display CAN message and allows use of the message structure for easier message handling  
-	void read(CAN_DATA_FRAME_J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling 
-	void read(CAN_DATA_FRAME_CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling 
-		
-	bool msgAvailable(); // check if message has been received on any of the buffers
-	
+    CAN_MCP2515(byte CS_Pin);// SPI CS is selectable through sketch. Allows multiple CAN channels.
+    void begin (byte mode, int CANspeed);// Initializes CAN communications. Note it also starts SPI communications
+    void begin (int CANspeed);// Initializes CAN communications into Normal mode. Note it also starts SPI communications
+    void bitRate(int CANspeed);//sets up CAN bit rate
+    void setMode(byte mode) ;//puts CAN controller in one of five modes
+    void reset(); //CAN software reset. Also puts MCP2515 into config mode
+    byte readMode(); // reads CAN mode
+    unsigned short readRate(); // reads CANspeed
 
-	// OTHER USEFUL FUNCTIONS
+    void writeAddress(byte address, byte value);// writes MCP2515 register addresses
+    byte readAddress(byte address); //reads MCP2515 registers
+    void modifyAddress(byte address, byte mask, byte value); // MCP2515 SPI bit modification commands
 
-	void enableRTSPins (); // Enable hardware request to send (RTS) pins if they are available. It allows messages to be send by driving MCP2515 RTS pins low.  
-	void setInterrupts(byte mask, byte writeVal); //Enable/disable interrupts
-	void setMask(byte mask, byte b0, byte b1, byte b2, byte b3); // Set Masks for filters
-	void setFilter(byte filter, byte b0, byte b1, byte b2, byte b3); //Set Receive filters
-		
-	private:
-		byte CS; //SPI CS is selectable through sketch
-	
+    void clearRxBuffers(); // clears all receive buffers
+    void clearTxBuffers(); // clears all receive buffers
+    void clearFilters();   // clears all filters and masks
+
+    byte readStatus(); //reads several status bits for transmit and receive functions.
+    byte readRXStatus(); //reads receive functions and filhits
+
+    void loadMsg(byte buffer, unsigned long ID, byte frameType, byte length, byte *data); //Load Standard Data Frame Message into TX buffer X. Note this only load message to buffer. RTS is needed to send message
+
+    void sendTx(byte buffer); //(RTS) Request to send individual TX buffers or all
+
+    void send(unsigned long ID, byte frameType, byte length, byte *data); // Load and send message. No RTS needed.
+
+    void read(unsigned long *ID, byte *length_out, byte *data_out); // Receive and display any message (J1939, CANopen, CAN)
+    void read(CAN_DATA_FRAME *message); //Receive and display CAN message and allows use of the message structure for easier message handling
+    void read(CAN_DATA_FRAME_J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling
+    void read(CAN_DATA_FRAME_CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling
+
+    bool msgAvailable(); // check if message has been received on any of the buffers
+
+
+    // OTHER USEFUL FUNCTIONS
+
+    void enableRTSPins (); // Enable hardware request to send (RTS) pins if they are available. It allows messages to be send by driving MCP2515 RTS pins low.
+    void setInterrupts(byte mask, byte writeVal); //Enable/disable interrupts
+    void setMask(byte mask, byte b0, byte b1, byte b2, byte b3); // Set Masks for filters
+    void setFilter(byte filter, byte b0, byte b1, byte b2, byte b3); //Set Receive filters
+
+  private:
+    byte CS; //SPI CS is selectable through sketch
+
 };
 
 #endif // _CAN_MCP2515_H_

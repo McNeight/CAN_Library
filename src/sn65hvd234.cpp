@@ -38,19 +38,19 @@
  */
 uint32_t SSN65HVD234::Init()
 {
-    dwPin_Rs=0u ;
-    dwPin_EN=0u ;
+  dwPin_Rs = 0u ;
+  dwPin_EN = 0u ;
 
-    return 0u ;
+  return 0u ;
 }
 
 
 SSN65HVD234::SSN65HVD234(uint32_t Rs, uint32_t En)
 {
-    dwPin_Rs=Rs ;
-    pinMode(dwPin_Rs, OUTPUT ) ;
-    dwPin_EN=En;
-    pinMode( dwPin_EN, OUTPUT ) ;
+  dwPin_Rs = Rs ;
+  pinMode(dwPin_Rs, OUTPUT ) ;
+  dwPin_EN = En;
+  pinMode( dwPin_EN, OUTPUT ) ;
 }
 
 /**
@@ -64,11 +64,11 @@ SSN65HVD234::SSN65HVD234(uint32_t Rs, uint32_t En)
  */
 uint32_t SSN65HVD234::SetRs(uint32_t Rs )
 {
-    dwPin_Rs=Rs ;
+  dwPin_Rs = Rs ;
 
-    pinMode(dwPin_Rs, OUTPUT ) ;
+  pinMode(dwPin_Rs, OUTPUT ) ;
 
-    return 0u ;
+  return 0u ;
 }
 
 /**
@@ -82,11 +82,11 @@ uint32_t SSN65HVD234::SetRs(uint32_t Rs )
  */
 uint32_t SSN65HVD234::SetEN(uint32_t EN )
 {
-    dwPin_EN=EN ;
+  dwPin_EN = EN ;
 
-    pinMode( dwPin_EN, OUTPUT ) ;
+  pinMode( dwPin_EN, OUTPUT ) ;
 
-    return 0u ;
+  return 0u ;
 }
 
 /**
@@ -98,10 +98,10 @@ uint32_t SSN65HVD234::SetEN(uint32_t EN )
  */
 uint32_t SSN65HVD234::Enable()
 {
-    // Raise EN of SN65HVD234 to High Level (Vcc)
-    digitalWrite(dwPin_EN, HIGH ) ;
+  // Raise EN of SN65HVD234 to High Level (Vcc)
+  digitalWrite(dwPin_EN, HIGH ) ;
 
-    return 0u ;
+  return 0u ;
 }
 
 /**
@@ -113,10 +113,10 @@ uint32_t SSN65HVD234::Enable()
  */
 uint32_t SSN65HVD234::Disable()
 {
-    // Lower EN of SN65HVD234 to Low Level (0.0v)
-    digitalWrite(dwPin_EN, LOW ) ;
+  // Lower EN of SN65HVD234 to Low Level (0.0v)
+  digitalWrite(dwPin_EN, LOW ) ;
 
-    return 0u ;
+  return 0u ;
 }
 
 /**
@@ -128,12 +128,12 @@ uint32_t SSN65HVD234::Disable()
  */
 uint32_t SSN65HVD234::EnableLowPower()
 {
-    // Raise Rs of SN65HVD234 to more than 0.75v
-    digitalWrite(dwPin_Rs, HIGH ) ;
+  // Raise Rs of SN65HVD234 to more than 0.75v
+  digitalWrite(dwPin_Rs, HIGH ) ;
 
-    // Now, SN65HVD234 is only listening
+  // Now, SN65HVD234 is only listening
 
-    return 0u ;
+  return 0u ;
 }
 
 /**
@@ -145,10 +145,10 @@ uint32_t SSN65HVD234::EnableLowPower()
  */
 uint32_t SSN65HVD234::DisableLowPower()
 {
-    // Lower Rs of SN65HVD234 to 0.0v < 0.33v
-    digitalWrite(dwPin_Rs, LOW ) ;
+  // Lower Rs of SN65HVD234 to 0.0v < 0.33v
+  digitalWrite(dwPin_Rs, LOW ) ;
 
-    return 0u ;
+  return 0u ;
 }
 
 #endif // defined(ARDUINO_ARCH_SAM)

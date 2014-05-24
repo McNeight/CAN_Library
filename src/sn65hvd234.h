@@ -18,11 +18,11 @@
 
 #if defined(ARDUINO_ARCH_SAM)
 
- /**
-   *  \file
-   *
-   *  Include Defines & macros for the SN65HVD234.
-   */
+/**
+  *  \file
+  *
+  *  Include Defines & macros for the SN65HVD234.
+  */
 
 #ifndef _CAN_SN65HVD234_
 #define _CAN_SN65HVD234_
@@ -31,23 +31,23 @@
 
 class SSN65HVD234
 {
-private:
+  private:
     /** Rs Pin on PIO */
     uint32_t dwPin_Rs ;
 
     /** EN Pin on PIO */
     uint32_t dwPin_EN ;
-public:
-	uint32_t Init() ;
-	uint32_t SetRs(uint32_t Rs ) ;
-	uint32_t SetEN(uint32_t EN ) ;
+  public:
+    uint32_t Init() ;
+    uint32_t SetRs(uint32_t Rs ) ;
+    uint32_t SetEN(uint32_t EN ) ;
 
-	uint32_t Enable();
-	uint32_t Disable();
+    uint32_t Enable();
+    uint32_t Disable();
 
-	uint32_t EnableLowPower();
-	uint32_t DisableLowPower();
-	SSN65HVD234(uint32_t Rs, uint32_t En);
+    uint32_t EnableLowPower();
+    uint32_t DisableLowPower();
+    SSN65HVD234(uint32_t Rs, uint32_t En);
 };
 
 #endif // _CAN_SN65HVD234_
