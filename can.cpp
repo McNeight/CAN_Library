@@ -30,7 +30,7 @@ DATE		VER		WHO			WHAT
 09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
 05/01/14	0.4		PC		Cleaned up fuctions, variables and added message structures for J1939, CANopen and CAN.
-05/07/14	1.0		PC		Released Library to the publich through gitHub
+05/07/14	1.0		PC		Released Library to the publich through gitHub. Changelog will be tracked through GitHub
 -------------------------------------------------------------------------------------------------------------
 
 Features:
@@ -544,7 +544,7 @@ Bit 0: RX0IE: Receive Buffer 0 Full Interrupt Enable bit
 
 
 // Function to load and send any message. (J1939, CANopen, CAN). It assumes user knows what the ID is supposed to be
-void MCP::send(unsigned long ID, byte frameType, byte length, byte *data)
+void MCP::write(unsigned long ID, byte frameType, byte length, byte *data)// changed from send() to write()
 {
 	
 	byte i,id_high,id_low,ex_high,ex_low, status, loadBuffer, sendBuffer;
