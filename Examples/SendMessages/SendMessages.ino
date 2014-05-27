@@ -70,7 +70,7 @@ void extendedMessage(){
   byte length = 8;                                                    // Data length
   byte data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, counter1}; // data message with an added counter
   
-  CAN1.write (ID, extID, length, data);                                // Load message and send
+  CAN1.write(ID, extID, length, data);                                // Load message and send
   counter1++;                                                         // increase count
 }
 
@@ -82,7 +82,7 @@ void standardMessage(){
   byte length = 5;                                                     // Data length in this case let's say 5
   byte data[] = {0x01, 0x02, 0x03, 0x04, counter2};
   
-  CAN1.write (ID, stdID, length, data);                                 // Load message and send
+  CAN1.write(ID, stdID, length, data);                                 // Load message and send
   counter2++;                                                          // increase count
  }
 
