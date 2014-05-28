@@ -1,10 +1,11 @@
 /* CAN communications example
  
-  Topic: Send messages using send(ID, length, data) function
+  Topic: Send messages using write(ID, length, data) function
   Author: Pedro Cevallos
   Created: 05/07/14
+  Updated: 05/27/14
  
-  Example shows how to send and receive messages using MCP2515 CAN controller
+  Example shows how to send messages using MCP2515 CAN controller
   This example uses Serial Monitor to display received messages.
  
   As per wiki information:
@@ -35,7 +36,7 @@ unsigned int counter2 = 0;
   using more MCP2515s as long as we use different SPI CS to control data.
  */
 
-MCP CAN1(10); //Create CAN Channel
+MCP CAN1(10); //Create CAN Channel. SPI CS is pin 10 on this example
 
 void setup(){
 
@@ -69,7 +70,7 @@ void extendedMessage(){
   byte length = 8;                                                    // Data length
   byte data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, counter1}; // data message with an added counter
   
-  CAN1.send (ID, extID, length, data);                                // Load message and send
+  CAN1.write(ID, extID, length, data);                                // Load message and send
   counter1++;                                                         // increase count
 }
 
@@ -81,7 +82,7 @@ void standardMessage(){
   byte length = 5;                                                     // Data length in this case let's say 5
   byte data[] = {0x01, 0x02, 0x03, 0x04, counter2};
   
-  CAN1.send (ID, stdID, length, data);                                 // Load message and send
+  CAN1.write(ID, stdID, length, data);                                 // Load message and send
   counter2++;                                                          // increase count
  }
 

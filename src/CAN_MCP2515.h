@@ -30,7 +30,7 @@ DATE		VER		WHO			WHAT
 09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
 05/01/14	0.4		PC		Cleaned up functions, variables and added message structures for J1939, CANopen and CAN.
-05/07/14	1.0		PC		Released library to public through GitHub
+05/07/14	1.0		PC		Released library to public through GitHub. Changelog will be tracked through GitHub
 -------------------------------------------------------------------------------------------------------------
 
 Features:
