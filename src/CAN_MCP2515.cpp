@@ -532,7 +532,7 @@ void CAN_MCP2515::setInterrupts(byte mask, byte writeVal)
 
 
 // Function to load and send any message. (J1939, CANopen, CAN). It assumes user knows what the ID is supposed to be
-void CAN_MCP2515::send(unsigned long ID, byte frameType, byte length, byte *data)
+void CAN_MCP2515::write(unsigned long ID, byte frameType, byte length, byte *data)// changed from send() to write()
 {
 
   byte i, id_high, id_low, ex_high, ex_low, status, loadBuffer, sendBuffer;
