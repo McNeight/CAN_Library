@@ -23,6 +23,7 @@
 #include "CAN_SAM3X8E.h"
 #include "sn65hvd234.h"
 
+// Taken from libsam/source/can.c
 /** Define the timemark mask. */
 #define TIMEMARK_MASK              0x0000ffff
 
@@ -71,6 +72,238 @@ const can_bit_timing_t can_bit_time[] = {
   {24,  (6 + 1), (7 + 1), (7 + 1), (3 + 1), 67},
   {25,  (7 + 1), (7 + 1), (7 + 1), (3 + 1), 68}
 };
+
+/**
+* \brief constructor for the class
+*
+* \param Rs pin to use for transceiver Rs control
+* \param En pin to use for transceiver enable
+*/
+CAN_SAM3X8E::CAN_SAM3X8E()
+{
+  // Default to CAN bus 0
+  m_pCan = CAN0;
+  _init(SAM3X8E_CAN0_RS, SAM3X8E_CAN0_EN);
+}
+
+CAN_SAM3X8E::CAN_SAM3X8E(uint8_t bus)
+{
+  if (bus == 0)
+  {
+    m_pCan = CAN0;
+    _init(SAM3X8E_CAN0_RS, SAM3X8E_CAN0_EN);
+  }
+  else if (bus == 1)
+  {
+    m_pCan = CAN1;
+    _init(SAM3X8E_CAN1_RS, SAM3X8E_CAN1_EN);
+  }
+  else
+  {
+    // Don't know what to tell you here...
+  }
+}
+
+/**
+ * \brief Initialize CAN controller.
+ *
+ * \param ul_mck CAN module input clock.
+ * \param ul_baudrate CAN communication baudrate in kbs.
+ *
+ * \retval 0 If failed to initialize the CAN module; otherwise successful.
+ *
+ * \note PMC clock for CAN peripheral should be enabled before calling this function.
+ */
+bool CAN_SAM3X8E::_init(uint8_t Rs, uint8_t En)
+{
+
+  m_Transceiver = new SSN65HVD234(Rs, En);
+
+  //arduino 1.5.2 doesn't init canbus so make sure to do it here.
+#ifdef ARDUINO152
+  PIO_Configure(PIOA, PIO_PERIPH_A, PIO_PA1A_CANRX0 | PIO_PA0A_CANTX0, PIO_DEFAULT);
+  PIO_Configure(PIOB, PIO_PERIPH_A, PIO_PB15A_CANRX1 | PIO_PB14A_CANTX1, PIO_DEFAULT);
+#endif
+
+  if (m_pCan == CAN0) pmc_enable_periph_clk(ID_CAN0);
+  if (m_pCan == CAN1) pmc_enable_periph_clk(ID_CAN1);
+
+  m_Transceiver->DisableLowPower();
+  m_Transceiver->Enable();
+
+  /* Reset the CAN eight message mailbox. */
+  reset_all_mailbox();
+
+  //Also disable all interrupts by default
+  disable_interrupt(CAN_DISABLE_ALL_INTERRUPT_MASK);
+
+  //By default use one mailbox for TX
+  setNumTXBoxes(1);
+}
+
+void CAN_SAM3X8E::begin(uint32_t baud, uint8_t mode)
+{
+  uint32_t ul_flag;
+  uint32_t ul_tick;
+
+  /* Initialize the baudrate for CAN module. */
+  ul_flag = set_baudrate(baud);
+  if (ul_flag == 0) {
+    //return 0;
+  }
+
+  /* Enable the CAN controller. */
+  enable();
+
+  /* Wait until the CAN is synchronized with the bus activity. */
+  ul_flag = 0;
+  ul_tick = 0;
+  while (!(ul_flag & CAN_SR_WAKEUP) && (ul_tick < CAN_TIMEOUT)) {
+    ul_flag = m_pCan->CAN_SR;
+    ul_tick++;
+  }
+
+  NVIC_EnableIRQ(m_pCan == CAN0 ? CAN0_IRQn : CAN1_IRQn); //tell the nested interrupt controller to turn on our interrupt
+
+  /* Timeout or the CAN module has been synchronized with the bus. */
+  // if (CAN_TIMEOUT == ul_tick) {
+  // return 0;
+  // } else {
+  // return 1;
+  // }
+}
+
+
+void CAN_SAM3X8E::end()
+{
+  /* Disable the CAN controller. */
+  disable();
+}
+
+
+/**
+* \brief Check whether there are received canbus frames in the buffer
+*/
+uint8_t CAN_SAM3X8E::available()
+{
+  return (rx_buffer_head != rx_buffer_tail) ? true : false;
+}
+
+
+CAN_FRAME CAN_SAM3X8E::read() {
+  CAN_FRAME buffer;
+  if (rx_buffer_head == rx_buffer_tail) return 0;
+  buffer.id = rx_frame_buff[rx_buffer_tail].id;
+  buffer.extended = rx_frame_buff[rx_buffer_tail].extended;
+  buffer.length = rx_frame_buff[rx_buffer_tail].length;
+  buffer.data.value = rx_frame_buff[rx_buffer_tail].data.value;
+  rx_buffer_tail = (rx_buffer_tail + 1) % SAM3X8E_SIZE_RX_BUFFER;
+  return buffer;
+}
+
+
+void CAN_SAM3X8E::flush()
+{
+  reset_all_mailbox();
+}
+
+
+/*
+Does one of two things, either sends the given frame out on the first
+TX mailbox that's open or queues the frame for sending later via interrupts.
+This vastly simplifies the sending of frames - It does, however, assume
+that you're going to use interrupt driven transmission - It forces it really.
+*/
+uint8_t CAN_SAM3X8E::write(CAN_FRAME& txFrame)
+{
+  for (int i = 0; i < 8; i++) {
+    if (((m_pCan->CAN_MB[i].CAN_MMR >> 24) & 7) == CAN_MB_TX_MODE)
+    { //is this mailbox set up as a TX box?
+      if (m_pCan->CAN_MB[i].CAN_MSR & CAN_MSR_MRDY)
+      { //is it also available (not sending anything?)
+        mailbox_set_id(i, txFrame.id, txFrame.extended);
+        mailbox_set_datalen(i, txFrame.length);
+        mailbox_set_priority(i, txFrame.priority);
+        for (uint8_t cnt = 0; cnt < 8; cnt++)
+        {
+          mailbox_set_databyte(i, cnt, txFrame.data.bytes[cnt]);
+        }
+        enable_interrupt(0x01u << i); //enable the TX interrupt for this box
+        global_send_transfer_cmd((0x1u << i));
+        return 1; //we've sent it. mission accomplished.
+      }
+    }
+  }
+
+  //if execution got to this point then no free mailbox was found above
+  //so, queue the frame.
+  tx_frame_buff[tx_buffer_tail].id = txFrame.id;
+  tx_frame_buff[tx_buffer_tail].extended = txFrame.extended;
+  tx_frame_buff[tx_buffer_tail].length = txFrame.length;
+  tx_frame_buff[tx_buffer_tail].data.value = txFrame.data.value;
+  tx_buffer_tail = (tx_buffer_tail + 1) % SAM3X8E_SIZE_TX_BUFFER;
+}
+
+
+/**
+* \brief Handle all interrupt reasons
+*/
+void CAN_SAM3X8E::interruptHandler() {
+
+  uint32_t ul_status = m_pCan->CAN_SR; //get status of interrupts
+
+  if (ul_status & CAN_SR_MB0) { //mailbox 0 event
+    mailbox_int_handler(0, ul_status);
+  }
+  if (ul_status & CAN_SR_MB1) { //mailbox 1 event
+    mailbox_int_handler(1, ul_status);
+  }
+  if (ul_status & CAN_SR_MB2) { //mailbox 2 event
+    mailbox_int_handler(2, ul_status);
+  }
+  if (ul_status & CAN_SR_MB3) { //mailbox 3 event
+    mailbox_int_handler(3, ul_status);
+  }
+  if (ul_status & CAN_SR_MB4) { //mailbox 4 event
+    mailbox_int_handler(4, ul_status);
+  }
+  if (ul_status & CAN_SR_MB5) { //mailbox 5 event
+    mailbox_int_handler(5, ul_status);
+  }
+  if (ul_status & CAN_SR_MB6) { //mailbox 6 event
+    mailbox_int_handler(6, ul_status);
+  }
+  if (ul_status & CAN_SR_MB7) { //mailbox 7 event
+    mailbox_int_handler(7, ul_status);
+  }
+  if (ul_status & CAN_SR_ERRA) { //error active
+  }
+  if (ul_status & CAN_SR_WARN) { //warning limit
+  }
+  if (ul_status & CAN_SR_ERRP) { //error passive
+  }
+  if (ul_status & CAN_SR_BOFF) { //bus off
+  }
+  if (ul_status & CAN_SR_SLEEP) { //controller in sleep mode
+  }
+  if (ul_status & CAN_SR_WAKEUP) { //controller woke up
+  }
+  if (ul_status & CAN_SR_TOVF) { //timer overflow
+  }
+  if (ul_status & CAN_SR_TSTP) { //timestamp - start or end of frame
+  }
+  if (ul_status & CAN_SR_CERR) { //CRC error in mailbox
+  }
+  if (ul_status & CAN_SR_SERR) { //stuffing error in mailbox
+  }
+  if (ul_status & CAN_SR_AERR) { //ack error
+  }
+  if (ul_status & CAN_SR_FERR) { //form error
+  }
+  if (ul_status & CAN_SR_BERR) { //bit error
+  }
+}
+
 
 /**
  * \brief Configure CAN baudrate.
@@ -137,69 +370,6 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
                    CAN_BR_SJW(p_bit_time->uc_sjw - 1) |
                    CAN_BR_BRP(uc_prescale - 1);
   return 1;
-}
-
-/**
- * \brief Initialize CAN controller.
- *
- * \param ul_mck CAN module input clock.
- * \param ul_baudrate CAN communication baudrate in kbs.
- *
- * \retval 0 If failed to initialize the CAN module; otherwise successful.
- *
- * \note PMC clock for CAN peripheral should be enabled before calling this function.
- */
-uint32_t CAN_SAM3X8E::init(uint32_t ul_baudrate)
-{
-  uint32_t ul_flag;
-  uint32_t ul_tick;
-
-  //arduino 1.5.2 doesn't init canbus so make sure to do it here.
-#ifdef ARDUINO152
-  PIO_Configure(PIOA, PIO_PERIPH_A, PIO_PA1A_CANRX0 | PIO_PA0A_CANTX0, PIO_DEFAULT);
-  PIO_Configure(PIOB, PIO_PERIPH_A, PIO_PB15A_CANRX1 | PIO_PB14A_CANTX1, PIO_DEFAULT);
-#endif
-
-  if (m_pCan == CAN0) pmc_enable_periph_clk(ID_CAN0);
-  if (m_pCan == CAN1) pmc_enable_periph_clk(ID_CAN1);
-
-  m_Transceiver->DisableLowPower();
-  m_Transceiver->Enable();
-
-  /* Initialize the baudrate for CAN module. */
-  ul_flag = set_baudrate(ul_baudrate);
-  if (ul_flag == 0) {
-    return 0;
-  }
-
-  /* Reset the CAN eight message mailbox. */
-  reset_all_mailbox();
-
-  //Also disable all interrupts by default
-  disable_interrupt(CAN_DISABLE_ALL_INTERRUPT_MASK);
-
-  //By default use one mailbox for TX
-  setNumTXBoxes(1);
-
-  /* Enable the CAN controller. */
-  enable();
-
-  /* Wait until the CAN is synchronized with the bus activity. */
-  ul_flag = 0;
-  ul_tick = 0;
-  while (!(ul_flag & CAN_SR_WAKEUP) && (ul_tick < CAN_TIMEOUT)) {
-    ul_flag = m_pCan->CAN_SR;
-    ul_tick++;
-  }
-
-  NVIC_EnableIRQ(m_pCan == CAN0 ? CAN0_IRQn : CAN1_IRQn); //tell the nested interrupt controller to turn on our interrupt
-
-  /* Timeout or the CAN module has been synchronized with the bus. */
-  if (CAN_TIMEOUT == ul_tick) {
-    return 0;
-  } else {
-    return 1;
-  }
 }
 
 void CAN_SAM3X8E::setNumTXBoxes(int txboxes) {
@@ -587,41 +757,6 @@ void CAN_SAM3X8E::reset_all_mailbox()
   }
 }
 
-/*
-Does one of two things, either sends the given frame out on the first
-TX mailbox that's open or queues the frame for sending later via interrupts.
-This vastly simplifies the sending of frames - It does, however, assume
-that you're going to use interrupt driven transmission - It forces it really.
-*/
-void CAN_SAM3X8E::sendFrame(CAN_FRAME& txFrame)
-{
-  for (int i = 0; i < 8; i++) {
-    if (((m_pCan->CAN_MB[i].CAN_MMR >> 24) & 7) == CAN_MB_TX_MODE)
-    { //is this mailbox set up as a TX box?
-      if (m_pCan->CAN_MB[i].CAN_MSR & CAN_MSR_MRDY)
-      { //is it also available (not sending anything?)
-        mailbox_set_id(i, txFrame.id, txFrame.extended);
-        mailbox_set_datalen(i, txFrame.length);
-        mailbox_set_priority(i, txFrame.priority);
-        for (uint8_t cnt = 0; cnt < 8; cnt++)
-        {
-          mailbox_set_databyte(i, cnt, txFrame.data.bytes[cnt]);
-        }
-        enable_interrupt(0x01u << i); //enable the TX interrupt for this box
-        global_send_transfer_cmd((0x1u << i));
-        return; //we've sent it. mission accomplished.
-      }
-    }
-  }
-
-  //if execution got to this point then no free mailbox was found above
-  //so, queue the frame.
-  tx_frame_buff[tx_buffer_tail].id = txFrame.id;
-  tx_frame_buff[tx_buffer_tail].extended = txFrame.extended;
-  tx_frame_buff[tx_buffer_tail].length = txFrame.length;
-  tx_frame_buff[tx_buffer_tail].data.value = txFrame.data.value;
-  tx_buffer_tail = (tx_buffer_tail + 1) % SIZE_TX_BUFFER;
-}
 
 
 /**
@@ -802,93 +937,6 @@ uint32_t CAN_SAM3X8E::mailbox_tx_frame(uint8_t uc_index)
   return CAN_MAILBOX_TRANSFER_OK;
 }
 
-/**
-* \brief constructor for the class
-*
-* \param pCan Which canbus hardware to use (CAN0 or CAN1)
-* \param Rs pin to use for transceiver Rs control
-* \param En pin to use for transceiver enable
-*/
-CAN_SAM3X8E::CAN_SAM3X8E(Can* pCan, uint32_t Rs, uint32_t En ) {
-  m_pCan = pCan;
-  m_Transceiver = new SSN65HVD234(Rs, En);
-}
-
-/**
-* \brief Check whether there are received canbus frames in the buffer
-*/
-bool CAN_SAM3X8E::rx_avail() {
-  return (rx_buffer_head != rx_buffer_tail) ? true : false;
-}
-
-uint32_t CAN_SAM3X8E::get_rx_buff(CAN_FRAME& buffer) {
-  if (rx_buffer_head == rx_buffer_tail) return 0;
-  buffer.id = rx_frame_buff[rx_buffer_tail].id;
-  buffer.extended = rx_frame_buff[rx_buffer_tail].extended;
-  buffer.length = rx_frame_buff[rx_buffer_tail].length;
-  buffer.data.value = rx_frame_buff[rx_buffer_tail].data.value;
-  rx_buffer_tail = (rx_buffer_tail + 1) % SIZE_RX_BUFFER;
-  return 1;
-}
-
-/**
-* \brief Handle all interrupt reasons
-*/
-void CAN_SAM3X8E::interruptHandler() {
-
-  uint32_t ul_status = m_pCan->CAN_SR; //get status of interrupts
-
-  if (ul_status & CAN_SR_MB0) { //mailbox 0 event
-    mailbox_int_handler(0, ul_status);
-  }
-  if (ul_status & CAN_SR_MB1) { //mailbox 1 event
-    mailbox_int_handler(1, ul_status);
-  }
-  if (ul_status & CAN_SR_MB2) { //mailbox 2 event
-    mailbox_int_handler(2, ul_status);
-  }
-  if (ul_status & CAN_SR_MB3) { //mailbox 3 event
-    mailbox_int_handler(3, ul_status);
-  }
-  if (ul_status & CAN_SR_MB4) { //mailbox 4 event
-    mailbox_int_handler(4, ul_status);
-  }
-  if (ul_status & CAN_SR_MB5) { //mailbox 5 event
-    mailbox_int_handler(5, ul_status);
-  }
-  if (ul_status & CAN_SR_MB6) { //mailbox 6 event
-    mailbox_int_handler(6, ul_status);
-  }
-  if (ul_status & CAN_SR_MB7) { //mailbox 7 event
-    mailbox_int_handler(7, ul_status);
-  }
-  if (ul_status & CAN_SR_ERRA) { //error active
-  }
-  if (ul_status & CAN_SR_WARN) { //warning limit
-  }
-  if (ul_status & CAN_SR_ERRP) { //error passive
-  }
-  if (ul_status & CAN_SR_BOFF) { //bus off
-  }
-  if (ul_status & CAN_SR_SLEEP) { //controller in sleep mode
-  }
-  if (ul_status & CAN_SR_WAKEUP) { //controller woke up
-  }
-  if (ul_status & CAN_SR_TOVF) { //timer overflow
-  }
-  if (ul_status & CAN_SR_TSTP) { //timestamp - start or end of frame
-  }
-  if (ul_status & CAN_SR_CERR) { //CRC error in mailbox
-  }
-  if (ul_status & CAN_SR_SERR) { //stuffing error in mailbox
-  }
-  if (ul_status & CAN_SR_AERR) { //ack error
-  }
-  if (ul_status & CAN_SR_FERR) { //form error
-  }
-  if (ul_status & CAN_SR_BERR) { //bit error
-  }
-}
 
 /**
 * \brief Find unused RX mailbox and return its number
@@ -980,7 +1028,7 @@ void CAN_SAM3X8E::mailbox_int_handler(uint8_t mb, uint32_t ul_status) {
       case 2: //receive w/ overwrite
       case 4: //consumer - technically still a receive buffer
         mailbox_read(mb, &rx_frame_buff[rx_buffer_head]);
-        rx_buffer_head = (rx_buffer_head + 1) % SIZE_RX_BUFFER;
+        rx_buffer_head = (rx_buffer_head + 1) % SAM3X8E_SIZE_RX_BUFFER;
         break;
       case 3: //transmit
         if (tx_buffer_head != tx_buffer_tail)
@@ -991,7 +1039,7 @@ void CAN_SAM3X8E::mailbox_int_handler(uint8_t mb, uint32_t ul_status) {
           for (uint8_t cnt = 0; cnt < 8; cnt++)
             mailbox_set_databyte(mb, cnt, tx_frame_buff[tx_buffer_head].data.bytes[cnt]);
           global_send_transfer_cmd((0x1u << mb));
-          tx_buffer_head = (tx_buffer_head + 1) % SIZE_TX_BUFFER;
+          tx_buffer_head = (tx_buffer_head + 1) % SAM3X8E_SIZE_TX_BUFFER;
         }
         else {
           disable_interrupt(0x01 << mb);
@@ -1006,15 +1054,11 @@ void CAN_SAM3X8E::mailbox_int_handler(uint8_t mb, uint32_t ul_status) {
 //Outside of object interrupt dispatcher. Needed because interrupt handlers can't really be members of a class
 void CAN0_Handler(void)
 {
-  CAN.interruptHandler();
+  CANbus0.interruptHandler();
 }
 void CAN1_Handler(void)
 {
-  CAN2.interruptHandler();
+  CANbus1.interruptHandler();
 }
-
-/// instantiate the two canbus adapters
-CAN_SAM3X8E CAN(CAN0, CAN0_RS, CAN0_EN);
-CAN_SAM3X8E CAN2(CAN1, CAN1_RS, CAN1_EN);
 
 #endif // defined(ARDUINO_ARCH_SAM)

@@ -454,44 +454,53 @@ Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 #define allBuffers  	0
 
 // MCP class
-class CAN_MCP2515 : public CanClass
+class CAN_MCP2515 : public CANClass
 {
   public:
+    CAN_MCP2515();// Use pin 10 for SPI CS. Allows multiple CAN channels.
+    CAN_MCP2515(uint8_t CS_Pin);// SPI CS is selectable through sketch. Allows multiple CAN channels.
+    void begin (uint32_t baud) {
+      begin(baud, MCP2515_MODE_NORMAL);
+    }; // Initializes CAN communications into Normal mode. Note it also starts SPI communications
+    void begin (uint32_t baud, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
+    void end();
+    uint8_t available(); // check if message has been received on any of the buffers
+    CAN_FRAME read();
+    uint8_t read(unsigned long *ID, byte *length_out, byte *data_out); // Receive and display any message (J1939, CANopen, CAN)
+    //    uint8_t read(CAN_FRAME& message); //Receive and display CAN message and allows use of the message structure for easier message handling
+    //    uint8_t read(CAN_DATA_FRAME_J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling
+    //    uint8_t read(CAN_DATA_FRAME_CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling
+    void flush();
+    uint8_t write(CAN_FRAME&);
+    uint8_t write(unsigned long ID, byte frameType, byte length, byte *data); // Load and send message. No RTS needed.
 
 
-    CAN_MCP2515(byte CS_Pin);// SPI CS is selectable through sketch. Allows multiple CAN channels.
-    void begin (byte mode, int CANspeed);// Initializes CAN communications. Note it also starts SPI communications
-    void begin (int CANspeed);// Initializes CAN communications into Normal mode. Note it also starts SPI communications
-    void bitRate(int CANspeed);//sets up CAN bit rate
-    void setMode(byte mode) ;//puts CAN controller in one of five modes
     void reset(); //CAN software reset. Also puts MCP2515 into config mode
     byte readMode(); // reads CAN mode
-    unsigned short readRate(); // reads CANspeed
-
-    void writeAddress(byte address, byte value);// writes MCP2515 register addresses
-    byte readAddress(byte address); //reads MCP2515 registers
-    void modifyAddress(byte address, byte mask, byte value); // MCP2515 SPI bit modification commands
+    unsigned long readRate(); // reads CANspeed
 
     void clearRxBuffers(); // clears all receive buffers
     void clearTxBuffers(); // clears all receive buffers
     void clearFilters();   // clears all filters and masks
 
-    byte readStatus(); //reads several status bits for transmit and receive functions.
-    byte readRXStatus(); //reads receive functions and filhits
-
     void loadMsg(byte buffer, unsigned long ID, byte frameType, byte length, byte *data); //Load Standard Data Frame Message into TX buffer X. Note this only load message to buffer. RTS is needed to send message
 
     void sendTx(byte buffer); //(RTS) Request to send individual TX buffers or all
 
-    void send(unsigned long ID, byte frameType, byte length, byte *data); // Load and send message. No RTS needed.
+  private:
+    uint8_t CS; //SPI CS is selectable through sketch
+    void _init();
 
-    void read(unsigned long *ID, byte *length_out, byte *data_out); // Receive and display any message (J1939, CANopen, CAN)
-    void read(CAN_DATA_FRAME *message); //Receive and display CAN message and allows use of the message structure for easier message handling
-    void read(CAN_DATA_FRAME_J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling
-    void read(CAN_DATA_FRAME_CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling
+    // Make setting baud and mode only part of the constructor
+    void bitRate(unsigned long baud);//sets up CAN bit rate
+    void setMode(byte mode);//puts CAN controller in one of five modes
 
-    bool msgAvailable(); // check if message has been received on any of the buffers
+    void writeAddress(byte address, byte value);// writes MCP2515 register addresses
+    byte readAddress(byte address); //reads MCP2515 registers
+    void modifyAddress(byte address, byte mask, byte value); // MCP2515 SPI bit modification commands
 
+    byte readStatus(); //reads several status bits for transmit and receive functions.
+    byte readRXStatus(); //reads receive functions and filhits
 
     // OTHER USEFUL FUNCTIONS
 
@@ -499,9 +508,6 @@ class CAN_MCP2515 : public CanClass
     void setInterrupts(byte mask, byte writeVal); //Enable/disable interrupts
     void setMask(byte mask, byte b0, byte b1, byte b2, byte b3); // Set Masks for filters
     void setFilter(byte filter, byte b0, byte b1, byte b2, byte b3); //Set Receive filters
-
-  private:
-    byte CS; //SPI CS is selectable through sketch
 
 };
 

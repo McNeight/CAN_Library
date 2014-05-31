@@ -23,7 +23,7 @@
 
 // First we define our CAN mode and rate. 
 
-#define mode NORMAL // define CAN mode
+#define mode MCP2515_MODE_NORMAL // define CAN mode
 #define bitrate 500 // define CAN speed (bitrate)
 
 /* 
@@ -103,6 +103,8 @@ if (CAN1.msgAvailable() == true){                               // Check to see 
 
 void loop(){
 
+  byte J1939_data[] = {0x02, 0x01, 0x0C, 0x55};
+  CAN1.send(0x7DF, extID, 4, J1939_data);
   readMessage();
   delay(150);
 

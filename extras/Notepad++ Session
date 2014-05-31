@@ -1,0 +1,17 @@
+<NotepadPlus>
+    <Session activeView="1">
+        <mainView activeIndex="6">
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="768" startPos="0" endPos="0" selMode="0" lang="Normal Text" encoding="-1" filename="C:\Program Files (x86)\Notepad++\change.log" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="608" startPos="0" endPos="0" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\sn65hvd234.cpp" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="608" startPos="925" endPos="935" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\sn65hvd234.h" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="1136" startPos="2074" endPos="2074" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\CAN.cpp" />
+            <File firstVisibleLine="124" xOffset="0" scrollWidth="1104" startPos="5539" endPos="5539" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\CAN.h" />
+            <File firstVisibleLine="65" xOffset="0" scrollWidth="1600" startPos="3700" endPos="3700" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\CAN_MCP2515.cpp" />
+            <File firstVisibleLine="441" xOffset="0" scrollWidth="1688" startPos="13340" endPos="13340" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\CAN_MCP2515.h" />
+        </mainView>
+        <subView activeIndex="1">
+            <File firstVisibleLine="186" xOffset="0" scrollWidth="976" startPos="5952" endPos="5952" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\CAN_SAM3X8E.cpp" />
+            <File firstVisibleLine="101" xOffset="0" scrollWidth="1304" startPos="5636" endPos="5636" selMode="0" lang="C++" encoding="-1" filename="C:\Users\mcneightne\Documents\Arduino\libraries\CAN_Library\src\CAN_SAM3X8E.h" />
+        </subView>
+    </Session>
+</NotepadPlus>

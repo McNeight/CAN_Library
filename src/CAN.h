@@ -33,52 +33,37 @@ DATE		VER		WHO			WHAT
 05/07/14	1.0		PC		Released library to public through GitHub
 -------------------------------------------------------------------------------------------------------------
 
-Features:
-
-CAN V2.0B
-8 byte length in the data field
-Standard and extended data frames
-Two receive buffers
-Three Transmit Buffers
-SPI Interface
-
-Supported Baud rates
-10 kbps; 20 kbps; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
-
-Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
 */
-
 
 
 #ifndef _CAN_H_
 #define _CAN_H_
 
-#include "Arduino.h"
+#include <inttypes.h>
+#include <Arduino.h>
 
 // From the spec
-#define DOMINANT    0
-#define RECESSIVE   1
+#define CAN_DOMINANT    0
+#define CAN_RECESSIVE   1
 
-// Standard and Extended ID defines
-#define extID 		1
-#define stdID 		0
+// Base and Extended ID defines
+#define CAN_BASE_FRAME                11
+#define CAN_EXTENDED_FRAME            29
 
 // Define the typical bitrate for CAN communication in kbps.
-typedef enum
-{
-  CAN_BITRATE_5K                      = (0),
-  CAN_BITRATE_10K                     = (1),
-  CAN_BITRATE_20K                     = (2),
-  CAN_BITRATE_25K                     = (3),
-  CAN_BITRATE_50K                     = (4),
-  CAN_BITRATE_100K                    = (5),
-  CAN_BITRATE_125K                    = (6),
-  CAN_BITRATE_250K                    = (7),
-  CAN_BITRATE_500K                    = (8),
-  CAN_BITRATE_800K                    = (9),
-  CAN_BITRATE_1000K                   = (10),
-  CAN_BITRATE_1M                      = (10)
-} can_bitrate_t;
+#define CAN_BPS_1M                    1000000
+#define CAN_BPS_1000K                 1000000
+#define CAN_BPS_800K                  800000
+#define CAN_BPS_500K                  500000
+#define CAN_BPS_250K                  250000
+#define CAN_BPS_125K                  125000
+#define CAN_BPS_100K                  100000
+#define CAN_BPS_50K                   50000
+#define CAN_BPS_33333				  33333
+#define CAN_BPS_25K                   25000
+#define CAN_BPS_20K                   20000
+#define CAN_BPS_10K                   10000
+#define CAN_BPS_5K                    5000
 
 // CAN Message Structures
 // typedef struct
@@ -92,13 +77,49 @@ typedef enum
 // byte eof : 7;
 // } CAN_DATA_FRAME_COMPLETE;
 
+#if defined(ARDUINO_ARCH_SAM)
+//This is architecture specific. DO NOT USE THIS UNION ON ANYTHING OTHER THAN THE CORTEX M3 / Arduino Due
+//UNLESS YOU DOUBLE CHECK THINGS!
+typedef union {
+  uint64_t value;
+  struct {
+    uint32_t low;
+    uint32_t high;
+  };
+  struct {
+    uint16_t s0;
+    uint16_t s1;
+    uint16_t s2;
+    uint16_t s3;
+  };
+  uint8_t bytes[8];
+} BytesUnion;
+
 typedef struct
 {
-  uint32_t ID : 29; 			// Identifier
+  uint32_t id : 29;		// EID if ide set, SID otherwise
+  uint32_t fid;		// family ID
+  uint8_t rtr : 1;		// Remote Transmission Request
+  uint8_t priority;	// Priority but only important for TX frames and then only for special uses.
+  uint8_t extended : 1;	// Extended ID flag
+  uint8_t length : 4;		// Number of data bytes
+  BytesUnion data;	// 64 bits - lots of ways to access it.
+} CAN_FRAME;
+
+#elif defined(ARDUINO_ARCH_AVR)
+
+typedef struct
+{
+  uint32_t id : 29;		// EID if ide set, SID otherwise
+  uint32_t fid;		// family ID
   uint8_t rtr : 1; 			// Remote Transmission Request
+  uint8_t priority;	// Priority but only important for TX frames and then only for special uses.
+  uint8_t extended : 1;	// Extended ID flag
   uint8_t length : 4; 		// Data Length
   uint8_t data[8]; 			// Message data
-} CAN_DATA_FRAME;
+} CAN_FRAME;
+
+#endif // CAN_FRAME
 
 // SAE J1939 Message Structures
 // Also:
@@ -139,23 +160,19 @@ typedef struct
   uint8_t data[4];
 } CAN_DATA_FRAME_CANaerospace;
 
-class CanClass
+class CANClass // Can't inherit from Stream
 {
-    //    private:
-
   public:
-    // Constructor(s)
-    void constructor();
+    virtual void begin(uint32_t baud);
+    virtual void end();
+    virtual uint8_t available();
+    virtual CAN_FRAME read();
+    virtual void flush();
+    virtual uint8_t write(CAN_FRAME&);
 
-    // These must be defined by the subclass
-    // virtual void enableAutoRange(bool enabled) {};
-    // virtual void getEvent(sensors_event_t*);
-    // virtual void getSensor(sensor_t*);
-
-    //virtual bool begin();
-    //virtual void baudConfig(int bitRate);      //sets up baud
-
+    //CAN_FRAME& operator=(const CAN_FRAME&);
 };
 
-//extern CanClass CAN;
+//extern CANClass CAN;
+
 #endif // _CAN_H_

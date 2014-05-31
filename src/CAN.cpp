@@ -33,24 +33,11 @@ DATE		VER		WHO			WHAT
 05/07/14	1.0		PC		Released Library to the public through GitHub
 -------------------------------------------------------------------------------------------------------------
 
-Features:
-
-CAN V2.0B
-8 byte length in the data field
-Standard and extended data frames
-Two receive buffers
-Three Transmit Buffers
-SPI Interface
-
-Supported Baud rates
-10 kbps; 20 kbps; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
-
-Designed to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
 */
 
-#include "CAN.h"
-#include <avr/pgmspace.h>
 
-void CanClass::constructor()
-{
-}
+#include "CAN.h"
+
+//CAN_FRAME& CANClass::operator=(const CAN_FRAME&)
+//{
+//}

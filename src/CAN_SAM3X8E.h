@@ -73,90 +73,58 @@ typedef struct {
 #include "CAN.h"
 #include "sn65hvd234.h"
 
-//add some extra stuff that is needed for Arduino 1.5.2
-#ifndef PINS_CAN0
-static const uint8_t CAN1RX = 88;
-static const uint8_t CAN1TX = 89;
+#define SAM3X8E_CAN0_RS  61
+#define SAM3X8E_CAN0_EN  62
+#define SAM3X8E_CAN1_RS  63
+#define SAM3X8E_CAN1_EN  65
 
-// CAN0
-#define PINS_CAN0            (90u)
-// CAN1
-#define PINS_CAN1            (91u)
-#define ARDUINO152
-#endif
-
-
-
-#define CAN0_RS  61
-#define CAN0_EN  62
-#define CAN1_RS  63
-#define CAN1_EN  65
+#define SAM3X8E_MODE_NORMAL    0
+#define SAM3X8E_MODE_SLEEP     1 // Low-power mode
+//#define SAM3X8E_MODE_LOOPBACK  2
+#define SAM3X8E_MODE_LISTEN    3 // Auto-baud mode
+#define SAM3X8E_MODE_CONFIG    4 // disabled?
 
 /** Define the Mailbox mask for eight mailboxes. */
-#define GLOBAL_MAILBOX_MASK           0x000000ff
+#define SAM3X8E_GLOBAL_MAILBOX_MASK           0x000000ff
 
 /** Disable all interrupt mask */
-#define CAN_DISABLE_ALL_INTERRUPT_MASK 0xffffffff
-
-/** Define the typical baudrate for CAN communication in KHz. */
-#define CAN_BPS_1000K                 1000000
-#define CAN_BPS_800K                  800000
-#define CAN_BPS_500K                  500000
-#define CAN_BPS_250K                  250000
-#define CAN_BPS_125K                  125000
-#define CAN_BPS_50K                   50000
-#define CAN_BPS_33333				  33333
-#define CAN_BPS_25K                   25000
-#define CAN_BPS_10K                   10000
-#define CAN_BPS_5K                    5000
+#define SAM3X8E_DISABLE_ALL_INTERRUPT_MASK 0xffffffff
 
 /** Define the mailbox mode. */
-#define CAN_MB_DISABLE_MODE           0
-#define CAN_MB_RX_MODE                1
-#define CAN_MB_RX_OVER_WR_MODE        2
-#define CAN_MB_TX_MODE                3
-#define CAN_MB_CONSUMER_MODE          4
-#define CAN_MB_PRODUCER_MODE          5
+#define SAM3X8E_MB_DISABLE_MODE           0
+#define SAM3X8E_MB_RX_MODE                1
+#define SAM3X8E_MB_RX_OVER_WR_MODE        2
+#define SAM3X8E_MB_TX_MODE                3
+#define SAM3X8E_MB_CONSUMER_MODE          4
+#define SAM3X8E_MB_PRODUCER_MODE          5
 
 /** Define CAN mailbox transfer status code. */
-#define CAN_MAILBOX_TRANSFER_OK       0     //! Read from or write into mailbox successfully.
-#define CAN_MAILBOX_NOT_READY         0x01  //! Receiver is empty or transmitter is busy.
-#define CAN_MAILBOX_RX_OVER           0x02  //! Message overwriting happens or there're messages lost in different receive modes.
-#define CAN_MAILBOX_RX_NEED_RD_AGAIN  0x04  //! Application needs to re-read the data register in Receive with Overwrite mode.
+#define SAM3X8E_MAILBOX_TRANSFER_OK       0     //! Read from or write into mailbox successfully.
+#define SAM3X8E_MAILBOX_NOT_READY         0x01  //! Receiver is empty or transmitter is busy.
+#define SAM3X8E_MAILBOX_RX_OVER           0x02  //! Message overwriting happens or there're messages lost in different receive modes.
+#define SAM3X8E_MAILBOX_RX_NEED_RD_AGAIN  0x04  //! Application needs to re-read the data register in Receive with Overwrite mode.
 
-#define SIZE_RX_BUFFER	32 //RX incoming ring buffer is this big
-#define SIZE_TX_BUFFER	16 //TX ring buffer is this big
+#define SAM3X8E_SIZE_RX_BUFFER	32 //RX incoming ring buffer is this big
+#define SAM3X8E_SIZE_TX_BUFFER	16 //TX ring buffer is this big
 
-//This is architecture specific. DO NOT USE THIS UNION ON ANYTHING OTHER THAN THE CORTEX M3 / Arduino Due
-//UNLESS YOU DOUBLE CHECK THINGS!
-typedef union {
-  uint64_t value;
-  struct {
-    uint32_t low;
-    uint32_t high;
-  };
-  struct {
-    uint16_t s0;
-    uint16_t s1;
-    uint16_t s2;
-    uint16_t s3;
-  };
-  uint8_t bytes[8];
-} BytesUnion;
-
-typedef struct
+class CAN_SAM3X8E : public CANClass
 {
-  uint32_t id;		// EID if ide set, SID otherwise
-  uint32_t fid;		// family ID
-  uint8_t rtr;		// Remote Transmission Request
-  uint8_t priority;	// Priority but only important for TX frames and then only for special uses.
-  uint8_t extended;	// Extended ID flag
-  uint8_t length;		// Number of data bytes
-  BytesUnion data;	// 64 bits - lots of ways to access it.
-} CAN_FRAME;
+  public:
+    // Constructor
+    CAN_SAM3X8E();
+    CAN_SAM3X8E(uint8_t bus);
+    void begin (uint32_t baud) {
+      begin(baud, SAM3X8E_MODE_NORMAL);
+    };// Initializes CAN communications into Normal mode. Note it also starts SPI communications
+    void begin (uint32_t baud, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
+    void end();
+    uint8_t available();
+    CAN_FRAME read();
+    void flush();
+    uint8_t write(CAN_FRAME&);
 
-class CAN_SAM3X8E : public CanClass
-{
+    void interruptHandler();
+
   protected:
     /* CAN peripheral, set by constructor */
     Can* m_pCan ;
@@ -166,18 +134,15 @@ class CAN_SAM3X8E : public CanClass
 
     int numTXBoxes; //There are 8 mailboxes, anything not TX will be set RX
 
-    volatile CAN_FRAME rx_frame_buff[SIZE_RX_BUFFER];
-    volatile CAN_FRAME tx_frame_buff[SIZE_TX_BUFFER];
+    volatile CAN_FRAME rx_frame_buff[SAM3X8E_SIZE_RX_BUFFER];
+    volatile CAN_FRAME tx_frame_buff[SAM3X8E_SIZE_TX_BUFFER];
 
     volatile uint16_t rx_buffer_head, rx_buffer_tail;
     volatile uint16_t tx_buffer_head, tx_buffer_tail;
     void mailbox_int_handler(uint8_t mb, uint32_t ul_status);
 
   private:
-
-  public:
-    // Constructor
-    CAN_SAM3X8E( Can* pCan , uint32_t Rs, uint32_t En);
+    bool _init( uint8_t Rs, uint8_t En);
 
     /**
     * \defgroup sam_driver_can_group Controller Area Network (CAN) Driver
@@ -193,6 +158,8 @@ class CAN_SAM3X8E : public CanClass
     *
     * @{
     */
+
+    void reset(); //CAN software reset.
 
     int setRXFilter(uint32_t id, uint32_t mask, bool extended);
     int setRXFilter(uint8_t mailbox, uint32_t id, uint32_t mask, bool extended);
@@ -245,16 +212,14 @@ class CAN_SAM3X8E : public CanClass
     void mailbox_set_datalen(uint8_t uc_index, uint8_t dlen);
     void mailbox_set_datal(uint8_t uc_index, uint32_t val);
     void mailbox_set_datah(uint8_t uc_index, uint32_t val);
-    void sendFrame(CAN_FRAME& txFrame);
+    //void sendFrame(CAN_FRAME& txFrame);
 
     void reset_all_mailbox();
-    void interruptHandler();
-    bool rx_avail();
-    uint32_t get_rx_buff(CAN_FRAME &);
+    //uint32_t get_rx_buff(CAN_FRAME &);
 };
 
-//extern CAN_SAM3X8E CAN;
-//extern CAN_SAM3X8E CAN2;
+extern CAN_SAM3X8E CANbus0;
+extern CAN_SAM3X8E CANbus1;
 
 #endif // _CAN_SAM3X8E_H_
 

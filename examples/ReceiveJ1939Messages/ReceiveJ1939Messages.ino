@@ -25,14 +25,22 @@
  
  */
 
-#include <can.h> 
+#include <CAN.h>
+#if defined(ARDUINO_ARCH_AVR)
 #include <SPI.h> 
+#include <CAN_MCP2515.h>
+#elif defined(ARDUINO_ARCH_SAM)
+#include <variant.h>
+#include <CAN_SAM3X8E.h>
+#else
+#error “This library only supports boards with an AVR or SAM processor.”
+#endif
 
 
 // First we define our CAN mode and rate. 
 
 #define mode NORMAL // define CAN mode
-#define bitrate 250 // define CAN speed (bitrate)
+#define bitrate 500 // define CAN speed (bitrate)
 
 /* 
   Second we create CAN1 object (CAN channel) and select SPI CS Pin. Do not use "CAN" by itself as it will cause compile errors. 
@@ -40,11 +48,19 @@
   using more MCP2515s as long as we use different SPI CS to control data.
  */
 
-MCP CAN1(10); //Create CAN Channel
+#if defined(ARDUINO_ARCH_AVR)
+CAN_MCP2515 CAN1(10); //Create CAN Channel
+#elif defined(ARDUINO_ARCH_SAM)
+CAN_SAM3X8E CAN1;
+CAN1.init(SystemCoreClock, CAN_BPS_1000K);
+#else
+#error “This library only supports boards with an AVR or SAM processor.”
+#endif
+
 J1939 message; // Create message object to use J1939 message structure 
 
 
-void setup(){
+void setup() {
 
   Serial.begin(115200); // Initialize Serial communications with computer to use serial monitor
 
@@ -73,56 +89,58 @@ void setup(){
 // Note: standard frames are not supported in this message structure. 
 // If a standard message is received it will display all zeros and no data.
 
-void readMessage(){
+void readMessage() {
+
+  //J1939 message;
  
- if (CAN1.msgAvailable() == true){           // Check to see if a valid message has been received. 
+  if (CAN1.msgAvailable() == true) {          // Check to see if a valid message has been received.
 
     CAN1.read(&message);                     //read message, it will follow the J1939 structure of ID,Priority, source address, destination address, DLC, PGN, 
 
     Serial.print("ID");
     Serial.print(" | ");
-    Serial.print(message.ID,HEX);            //Display Identifier
+    Serial.print(message.ID, HEX);           //Display Identifier
     Serial.print(" | ");
     Serial.print("Priority");
     Serial.print(" | ");
-    Serial.print(message.PRIO,HEX);          //Display Message priority
+    Serial.print(message.PRIO, HEX);         //Display Message priority
     Serial.print(" | ");
     Serial.print("Source Address");
     Serial.print(" | ");
-    if(message.SA <0x10)                     //Adds a leading zero                   
+    if (message.SA < 0x10)                   //Adds a leading zero
       {
         Serial.print("0");
       }
-    Serial.print(message.SA,HEX);            //Display Source Address
+    Serial.print(message.SA, HEX);           //Display Source Address
     Serial.print(" | ");
     Serial.print("Destination Address");
     Serial.print(" | ");
-    if(message.DA <0x10)
+    if (message.DA < 0x10)
       {
         Serial.print("0");
       }
-    Serial.print(message.DA,HEX);            //Display Destination Address
+    Serial.print(message.DA, HEX);           //Display Destination Address
      Serial.print(" | ");
     Serial.print("PGN");
     Serial.print(" | ");
-    if(message.PGN <0x10)                     //Adds a leading zero    
+    if (message.PGN < 0x10)                   //Adds a leading zero
       {
         Serial.print("0");
       }
-    Serial.print(message.PGN,HEX);            //Display Parameter Group Number (PGN)
+    Serial.print(message.PGN, HEX);           //Display Parameter Group Number (PGN)
     Serial.print(" | ");
     Serial.print("DLC");
     Serial.print(" | ");
-    Serial.print(message.DLC,HEX);            //Display data length code (DLC)
+    Serial.print(message.DLC, HEX);           //Display data length code (DLC)
     Serial.print(" | ");
     Serial.print("Data");
-    for (byte i=0;i<message.DLC;i++) {
+    for (byte i = 0; i < message.DLC; i++) {
       Serial.print(" | ");
-      if(message.data[i] <0x10)
+      if (message.data[i] < 0x10)
       {
         Serial.print("0");
       }
-      Serial.print(message.data[i],HEX);      //Displays Data based on length
+      Serial.print(message.data[i], HEX);     //Displays Data based on length
     }
     Serial.println();
   }
@@ -131,10 +149,12 @@ void readMessage(){
 
 // Finally arduino loop to execute above function with a 100ms delay
 
-void loop(){
+void loop() {
 
+  byte J1939_data[] = {0x02, 0x01, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00};
+  CAN1.send(0x7DF, stdID, 8, J1939_data);
   readMessage();
-  delay(100);
+  delay(50);
 
 }
 
