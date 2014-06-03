@@ -55,7 +55,7 @@ void setup()
   delay(4000);  // Delay added just so we can have time to open up Serial Monitor and CAN bus monitor. It can be removed later...
 
   // Output will be formatted as a CSV file, for capture and analysis
-  Serial.println("millis(),ID,Length,Data");
+  Serial.println(F("millis(),ID,Length,Data"));
 }
 
 // Create a function to read message and display it through Serial Monitor
@@ -73,14 +73,14 @@ void readMessage()
     Serial.print(millis());
     Serial.print(",0x");
     Serial.print(can_ID, HEX); // Displays received ID
-    Serial.print(",");
+    Serial.print(',');
     Serial.print(can_length, HEX); // Displays message length
     for (byte i = 0; i < can_length; i++)
     {
-      Serial.print(",");
+      Serial.print(',');
       if (can_data[i] < 0x10) // If the data is less than 10 hex it will assign a zero to the front as leading zeros are ignored...
       {
-        Serial.print("0");
+        Serial.print('0');
       }
       Serial.print(can_data[i], HEX); // Displays message data
     }
@@ -96,4 +96,3 @@ void loop()
   readMessage();
   delay(50);
 }
-
