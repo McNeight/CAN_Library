@@ -98,10 +98,10 @@ typedef union {
 typedef struct
 {
   uint32_t id : 29;		// EID if ide set, SID otherwise
-  uint32_t fid;		// family ID
   uint8_t rtr : 1;		// Remote Transmission Request
-  uint8_t priority;	// Priority but only important for TX frames and then only for special uses.
   uint8_t extended : 1;	// Extended ID flag
+  uint32_t fid;		// family ID
+  uint8_t priority : 4;	// Priority but only important for TX frames and then only for special uses.
   uint8_t length : 4;		// Number of data bytes
   BytesUnion data;	// 64 bits - lots of ways to access it.
 } CAN_FRAME;
@@ -111,10 +111,10 @@ typedef struct
 typedef struct
 {
   uint32_t id : 29;		// EID if ide set, SID otherwise
-  uint32_t fid;		// family ID
   uint8_t rtr : 1; 			// Remote Transmission Request
-  uint8_t priority;	// Priority but only important for TX frames and then only for special uses.
   uint8_t extended : 1;	// Extended ID flag
+  uint32_t fid;		// family ID
+  uint8_t priority : 4;	// Priority but only important for TX frames and then only for special uses.
   uint8_t length : 4; 		// Data Length
   uint8_t data[8]; 			// Message data
 } CAN_FRAME;
