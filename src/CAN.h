@@ -47,8 +47,8 @@ DATE		VER		WHO			WHAT
 #define CAN_RECESSIVE   1
 
 // Base and Extended ID defines
-#define CAN_BASE_FRAME                11
-#define CAN_EXTENDED_FRAME            29
+#define CAN_BASE_FRAME                0
+#define CAN_EXTENDED_FRAME            1
 
 // Define the typical bitrate for CAN communication in kbps.
 #define CAN_BPS_1M                    1000000
@@ -77,40 +77,42 @@ DATE		VER		WHO			WHAT
 // byte eof : 7;
 // } CAN_DATA_FRAME_COMPLETE;
 
-#if defined(ARDUINO_ARCH_SAM)
-//This is architecture specific. DO NOT USE THIS UNION ON ANYTHING OTHER THAN THE CORTEX M3 / Arduino Due
-//UNLESS YOU DOUBLE CHECK THINGS!
-typedef union {
-  uint64_t value;
-  struct {
-    uint32_t low;
-    uint32_t high;
-  };
-  struct {
-    uint16_t s0;
-    uint16_t s1;
-    uint16_t s2;
-    uint16_t s3;
-  };
-  uint8_t bytes[8];
-} BytesUnion;
+// #if defined(ARDUINO_ARCH_SAM)
+// //This is architecture specific. DO NOT USE THIS UNION ON ANYTHING OTHER THAN THE CORTEX M3 / Arduino Due
+// //UNLESS YOU DOUBLE CHECK THINGS!
+// typedef union {
+  // uint64_t value;
+  // struct {
+    // uint32_t low;
+    // uint32_t high;
+  // };
+  // struct {
+    // uint16_t s0;
+    // uint16_t s1;
+    // uint16_t s2;
+    // uint16_t s3;
+  // };
+  // uint8_t bytes[8];
+// } BytesUnion;
+
+// typedef struct
+// {
+  // uint32_t id : 29;		// EID if ide set, SID otherwise
+  // uint8_t valid : 1;  // To avoid passing garbage frames around
+  // uint8_t rtr : 1;		// Remote Transmission Request
+  // uint8_t extended : 1;	// Extended ID flag
+  // uint32_t fid;		// family ID
+  // uint8_t priority : 4;	// Priority but only important for TX frames and then only for special uses.
+  // uint8_t length : 4;		// Number of data bytes
+  // BytesUnion data;	// 64 bits - lots of ways to access it.
+// } CAN_FRAME;
+
+// #elif defined(ARDUINO_ARCH_AVR)
 
 typedef struct
 {
   uint32_t id : 29;		// EID if ide set, SID otherwise
-  uint8_t rtr : 1;		// Remote Transmission Request
-  uint8_t extended : 1;	// Extended ID flag
-  uint32_t fid;		// family ID
-  uint8_t priority : 4;	// Priority but only important for TX frames and then only for special uses.
-  uint8_t length : 4;		// Number of data bytes
-  BytesUnion data;	// 64 bits - lots of ways to access it.
-} CAN_FRAME;
-
-#elif defined(ARDUINO_ARCH_AVR)
-
-typedef struct
-{
-  uint32_t id : 29;		// EID if ide set, SID otherwise
+  uint8_t valid : 1;  // To avoid passing garbage frames around
   uint8_t rtr : 1; 			// Remote Transmission Request
   uint8_t extended : 1;	// Extended ID flag
   uint32_t fid;		// family ID
@@ -119,7 +121,7 @@ typedef struct
   uint8_t data[8]; 			// Message data
 } CAN_FRAME;
 
-#endif // CAN_FRAME
+//#endif // CAN_FRAME
 
 // SAE J1939 Message Structures
 // Also:

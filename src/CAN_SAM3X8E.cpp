@@ -41,7 +41,8 @@
 #define CAN_BIT_SYNC               1
 #define CAN_BIT_IPT                2
 
-typedef struct {
+typedef struct
+{
   uint8_t uc_tq;      //! CAN_BIT_SYNC + uc_prog + uc_phase1 + uc_phase2 = uc_tq, 8 <= uc_tq <= 25.
   uint8_t uc_prog;    //! Propagation segment, (3-bits + 1), 1~8;
   uint8_t uc_phase1;  //! Phase segment 1, (3-bits + 1), 1~8;
@@ -52,7 +53,8 @@ typedef struct {
 
 
 /** Values of bit time register for different baudrates, Sample point = ((1 + uc_prog + uc_phase1) / uc_tq) * 100%. */
-const can_bit_timing_t can_bit_time[] = {
+const can_bit_timing_t can_bit_time[] =
+{
   {8,   (2 + 1), (1 + 1), (1 + 1), (2 + 1), 75},
   {9,   (1 + 1), (2 + 1), (2 + 1), (1 + 1), 67},
   {10,  (2 + 1), (2 + 1), (2 + 1), (2 + 1), 70},
@@ -120,7 +122,7 @@ bool CAN_SAM3X8E::_init(uint8_t Rs, uint8_t En)
   m_Transceiver = new SSN65HVD234(Rs, En);
 
   //arduino 1.5.2 doesn't init canbus so make sure to do it here.
-#ifdef ARDUINO152
+#ifdef ARDUINO156
   PIO_Configure(PIOA, PIO_PERIPH_A, PIO_PA1A_CANRX0 | PIO_PA0A_CANTX0, PIO_DEFAULT);
   PIO_Configure(PIOB, PIO_PERIPH_A, PIO_PB15A_CANRX1 | PIO_PB14A_CANTX1, PIO_DEFAULT);
 #endif
@@ -130,15 +132,6 @@ bool CAN_SAM3X8E::_init(uint8_t Rs, uint8_t En)
 
   m_Transceiver->DisableLowPower();
   m_Transceiver->Enable();
-
-  /* Reset the CAN eight message mailbox. */
-  reset_all_mailbox();
-
-  //Also disable all interrupts by default
-  disable_interrupt(CAN_DISABLE_ALL_INTERRUPT_MASK);
-
-  //By default use one mailbox for TX
-  setNumTXBoxes(1);
 }
 
 void CAN_SAM3X8E::begin(uint32_t baud, uint8_t mode)
@@ -148,9 +141,19 @@ void CAN_SAM3X8E::begin(uint32_t baud, uint8_t mode)
 
   /* Initialize the baudrate for CAN module. */
   ul_flag = set_baudrate(baud);
-  if (ul_flag == 0) {
+  if (ul_flag == 0)
+  {
     //return 0;
   }
+
+  /* Reset the CAN eight message mailbox. */
+  reset_all_mailbox();
+
+  //Also disable all interrupts by default
+  disable_interrupt(CAN_DISABLE_ALL_INTERRUPT_MASK);
+
+  //By default use one mailbox for TX
+  setNumTXBoxes(1);
 
   /* Enable the CAN controller. */
   enable();
@@ -158,7 +161,8 @@ void CAN_SAM3X8E::begin(uint32_t baud, uint8_t mode)
   /* Wait until the CAN is synchronized with the bus activity. */
   ul_flag = 0;
   ul_tick = 0;
-  while (!(ul_flag & CAN_SR_WAKEUP) && (ul_tick < CAN_TIMEOUT)) {
+  while (!(ul_flag & CAN_SR_WAKEUP) && (ul_tick < CAN_TIMEOUT))
+  {
     ul_flag = m_pCan->CAN_SR;
     ul_tick++;
   }
@@ -171,6 +175,24 @@ void CAN_SAM3X8E::begin(uint32_t baud, uint8_t mode)
   // } else {
   // return 1;
   // }
+
+  //By default there are 7 mailboxes for each device that are RX boxes
+  //This sets each mailbox to have an open filter that will accept extended
+  //or standard frames
+  int filter;
+  //extended
+  for (filter = 0; filter < 3; filter++)
+  {
+    CANbus0.setRXFilter(filter, 0, 0, true);
+    CANbus1.setRXFilter(filter, 0, 0, true);
+  }
+  //standard
+  for (int filter = 3; filter < 7; filter++)
+  {
+    CANbus0.setRXFilter(filter, 0, 0, false);
+    CANbus1.setRXFilter(filter, 0, 0, false);
+  }
+
 }
 
 
@@ -190,14 +212,25 @@ uint8_t CAN_SAM3X8E::available()
 }
 
 
-CAN_FRAME CAN_SAM3X8E::read() {
+CAN_FRAME CAN_SAM3X8E::read()
+{
   CAN_FRAME buffer;
-  if (rx_buffer_head == rx_buffer_tail) return 0;
-  buffer.id = rx_frame_buff[rx_buffer_tail].id;
-  buffer.extended = rx_frame_buff[rx_buffer_tail].extended;
-  buffer.length = rx_frame_buff[rx_buffer_tail].length;
-  buffer.data.value = rx_frame_buff[rx_buffer_tail].data.value;
-  rx_buffer_tail = (rx_buffer_tail + 1) % SAM3X8E_SIZE_RX_BUFFER;
+  if (rx_buffer_head == rx_buffer_tail)
+  {
+    buffer.valid = 0;
+  }
+  else
+  {
+    buffer.valid = 1;
+    buffer.id = rx_frame_buff[rx_buffer_tail].id;
+    buffer.extended = rx_frame_buff[rx_buffer_tail].extended;
+    buffer.length = rx_frame_buff[rx_buffer_tail].length;
+    for (int c = 0; c < 8; c++)
+    {
+      buffer.data[c] = rx_frame_buff[rx_buffer_tail].data[c];
+    }
+    rx_buffer_tail = (rx_buffer_tail + 1) % SAM3X8E_SIZE_RX_BUFFER;
+  }
   return buffer;
 }
 
@@ -216,17 +249,20 @@ that you're going to use interrupt driven transmission - It forces it really.
 */
 uint8_t CAN_SAM3X8E::write(CAN_FRAME& txFrame)
 {
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 8; i++)
+  {
     if (((m_pCan->CAN_MB[i].CAN_MMR >> 24) & 7) == CAN_MB_TX_MODE)
-    { //is this mailbox set up as a TX box?
+    {
+      //is this mailbox set up as a TX box?
       if (m_pCan->CAN_MB[i].CAN_MSR & CAN_MSR_MRDY)
-      { //is it also available (not sending anything?)
+      {
+        //is it also available (not sending anything?)
         mailbox_set_id(i, txFrame.id, txFrame.extended);
         mailbox_set_datalen(i, txFrame.length);
         mailbox_set_priority(i, txFrame.priority);
         for (uint8_t cnt = 0; cnt < 8; cnt++)
         {
-          mailbox_set_databyte(i, cnt, txFrame.data.bytes[cnt]);
+          mailbox_set_databyte(i, cnt, txFrame.data[cnt]);
         }
         enable_interrupt(0x01u << i); //enable the TX interrupt for this box
         global_send_transfer_cmd((0x1u << i));
@@ -240,7 +276,14 @@ uint8_t CAN_SAM3X8E::write(CAN_FRAME& txFrame)
   tx_frame_buff[tx_buffer_tail].id = txFrame.id;
   tx_frame_buff[tx_buffer_tail].extended = txFrame.extended;
   tx_frame_buff[tx_buffer_tail].length = txFrame.length;
-  tx_frame_buff[tx_buffer_tail].data.value = txFrame.data.value;
+  tx_frame_buff[tx_buffer_tail].data[0] = txFrame.data[0];
+  tx_frame_buff[tx_buffer_tail].data[1] = txFrame.data[1];
+  tx_frame_buff[tx_buffer_tail].data[2] = txFrame.data[2];
+  tx_frame_buff[tx_buffer_tail].data[3] = txFrame.data[3];
+  tx_frame_buff[tx_buffer_tail].data[4] = txFrame.data[4];
+  tx_frame_buff[tx_buffer_tail].data[5] = txFrame.data[5];
+  tx_frame_buff[tx_buffer_tail].data[6] = txFrame.data[6];
+  tx_frame_buff[tx_buffer_tail].data[7] = txFrame.data[7];
   tx_buffer_tail = (tx_buffer_tail + 1) % SAM3X8E_SIZE_TX_BUFFER;
 }
 
@@ -248,59 +291,81 @@ uint8_t CAN_SAM3X8E::write(CAN_FRAME& txFrame)
 /**
 * \brief Handle all interrupt reasons
 */
-void CAN_SAM3X8E::interruptHandler() {
+void CAN_SAM3X8E::interruptHandler()
+{
 
   uint32_t ul_status = m_pCan->CAN_SR; //get status of interrupts
 
-  if (ul_status & CAN_SR_MB0) { //mailbox 0 event
+  if (ul_status & CAN_SR_MB0)   //mailbox 0 event
+  {
     mailbox_int_handler(0, ul_status);
   }
-  if (ul_status & CAN_SR_MB1) { //mailbox 1 event
+  if (ul_status & CAN_SR_MB1)   //mailbox 1 event
+  {
     mailbox_int_handler(1, ul_status);
   }
-  if (ul_status & CAN_SR_MB2) { //mailbox 2 event
+  if (ul_status & CAN_SR_MB2)   //mailbox 2 event
+  {
     mailbox_int_handler(2, ul_status);
   }
-  if (ul_status & CAN_SR_MB3) { //mailbox 3 event
+  if (ul_status & CAN_SR_MB3)   //mailbox 3 event
+  {
     mailbox_int_handler(3, ul_status);
   }
-  if (ul_status & CAN_SR_MB4) { //mailbox 4 event
+  if (ul_status & CAN_SR_MB4)   //mailbox 4 event
+  {
     mailbox_int_handler(4, ul_status);
   }
-  if (ul_status & CAN_SR_MB5) { //mailbox 5 event
+  if (ul_status & CAN_SR_MB5)   //mailbox 5 event
+  {
     mailbox_int_handler(5, ul_status);
   }
-  if (ul_status & CAN_SR_MB6) { //mailbox 6 event
+  if (ul_status & CAN_SR_MB6)   //mailbox 6 event
+  {
     mailbox_int_handler(6, ul_status);
   }
-  if (ul_status & CAN_SR_MB7) { //mailbox 7 event
+  if (ul_status & CAN_SR_MB7)   //mailbox 7 event
+  {
     mailbox_int_handler(7, ul_status);
   }
-  if (ul_status & CAN_SR_ERRA) { //error active
+  if (ul_status & CAN_SR_ERRA)   //error active
+  {
   }
-  if (ul_status & CAN_SR_WARN) { //warning limit
+  if (ul_status & CAN_SR_WARN)   //warning limit
+  {
   }
-  if (ul_status & CAN_SR_ERRP) { //error passive
+  if (ul_status & CAN_SR_ERRP)   //error passive
+  {
   }
-  if (ul_status & CAN_SR_BOFF) { //bus off
+  if (ul_status & CAN_SR_BOFF)   //bus off
+  {
   }
-  if (ul_status & CAN_SR_SLEEP) { //controller in sleep mode
+  if (ul_status & CAN_SR_SLEEP)   //controller in sleep mode
+  {
   }
-  if (ul_status & CAN_SR_WAKEUP) { //controller woke up
+  if (ul_status & CAN_SR_WAKEUP)   //controller woke up
+  {
   }
-  if (ul_status & CAN_SR_TOVF) { //timer overflow
+  if (ul_status & CAN_SR_TOVF)   //timer overflow
+  {
   }
-  if (ul_status & CAN_SR_TSTP) { //timestamp - start or end of frame
+  if (ul_status & CAN_SR_TSTP)   //timestamp - start or end of frame
+  {
   }
-  if (ul_status & CAN_SR_CERR) { //CRC error in mailbox
+  if (ul_status & CAN_SR_CERR)   //CRC error in mailbox
+  {
   }
-  if (ul_status & CAN_SR_SERR) { //stuffing error in mailbox
+  if (ul_status & CAN_SR_SERR)   //stuffing error in mailbox
+  {
   }
-  if (ul_status & CAN_SR_AERR) { //ack error
+  if (ul_status & CAN_SR_AERR)   //ack error
+  {
   }
-  if (ul_status & CAN_SR_FERR) { //form error
+  if (ul_status & CAN_SR_FERR)   //form error
+  {
   }
-  if (ul_status & CAN_SR_BERR) { //bit error
+  if (ul_status & CAN_SR_BERR)   //bit error
+  {
   }
 }
 
@@ -325,12 +390,14 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
 
   /* Check whether the baudrate prescale will be greater than the max divide value. */
   if (((ul_mck + (ul_baudrate * CAN_MAX_TQ_NUM - 1)) /
-       (ul_baudrate * CAN_MAX_TQ_NUM)) > CAN_BAUDRATE_MAX_DIV) {
+       (ul_baudrate * CAN_MAX_TQ_NUM)) > CAN_BAUDRATE_MAX_DIV)
+  {
     return 0;
   }
 
   /* Check whether the input MCK is too small. */
-  if (ul_mck  < ul_baudrate * CAN_MIN_TQ_NUM) {
+  if (ul_mck  < ul_baudrate * CAN_MIN_TQ_NUM)
+  {
     return 0;
   }
 
@@ -340,13 +407,17 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
   /* Initialize the remainder as the max value. When the remainder is 0, get the right TQ number. */
   ul_mod = 0xffffffff;
   /* Find out the approximate Time Quantum according to the baudrate. */
-  for (uint8_t i = CAN_MIN_TQ_NUM; i <= CAN_MAX_TQ_NUM; i++) {
-    if ((ul_mck / (ul_baudrate * i)) <= CAN_BAUDRATE_MAX_DIV) {
+  for (uint8_t i = CAN_MIN_TQ_NUM; i <= CAN_MAX_TQ_NUM; i++)
+  {
+    if ((ul_mck / (ul_baudrate * i)) <= CAN_BAUDRATE_MAX_DIV)
+    {
       ul_cur_mod = ul_mck % (ul_baudrate * i);
-      if (ul_cur_mod < ul_mod) {
+      if (ul_cur_mod < ul_mod)
+      {
         ul_mod = ul_cur_mod;
         uc_tq = i;
-        if (!ul_mod) {
+        if (!ul_mod)
+        {
           break;
         }
       }
@@ -372,7 +443,8 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
   return 1;
 }
 
-void CAN_SAM3X8E::setNumTXBoxes(int txboxes) {
+void CAN_SAM3X8E::setNumTXBoxes(int txboxes)
+{
   int c;
 
   if (txboxes > 8) txboxes = 8;
@@ -380,14 +452,16 @@ void CAN_SAM3X8E::setNumTXBoxes(int txboxes) {
   numTXBoxes = txboxes;
 
   //Inialize RX boxen
-  for (c = 0; c < 8 - numTXBoxes; c++) {
+  for (c = 0; c < 8 - numTXBoxes; c++)
+  {
     mailbox_set_mode(c, CAN_MB_RX_MODE);
     mailbox_set_id(c, 0x0, false);
     mailbox_set_accept_mask(c, 0x7FF, false);
   }
 
   //Initialize TX boxen
-  for (c = 8 - numTXBoxes; c < 8; c++) {
+  for (c = 8 - numTXBoxes; c < 8; c++)
+  {
     mailbox_set_mode(c, CAN_MB_TX_MODE);
     mailbox_set_priority(c, 10);
     mailbox_set_accept_mask(c, 0x7FF, false);
@@ -481,9 +555,12 @@ void CAN_SAM3X8E::enable_overload_frame()
  */
 void CAN_SAM3X8E::set_timestamp_capture_point(uint32_t ul_flag)
 {
-  if (ul_flag) {
+  if (ul_flag)
+  {
     m_pCan->CAN_MR |= CAN_MR_TEOF;
-  } else {
+  }
+  else
+  {
     m_pCan->CAN_MR &= ~CAN_MR_TEOF;
   }
 }
@@ -752,7 +829,8 @@ void CAN_SAM3X8E::mailbox_init(uint8_t uc_index)
  */
 void CAN_SAM3X8E::reset_all_mailbox()
 {
-  for (uint8_t i = 0; i < CANMB_NUMBER; i++) {
+  for (uint8_t i = 0; i < CANMB_NUMBER; i++)
+  {
     mailbox_init(i);
   }
 }
@@ -782,16 +860,19 @@ uint32_t CAN_SAM3X8E::mailbox_read(uint8_t uc_index, volatile CAN_FRAME *rxframe
 
   /* Check whether there is overwriting happening in Receive with Overwrite mode,
      or there're messages lost in Receive mode. */
-  if ((ul_status & CAN_MSR_MRDY) && (ul_status & CAN_MSR_MMI)) {
+  if ((ul_status & CAN_MSR_MRDY) && (ul_status & CAN_MSR_MMI))
+  {
     ul_retval = CAN_MAILBOX_RX_OVER;
   }
 
   ul_id = m_pCan->CAN_MB[uc_index].CAN_MID;
-  if ((ul_id & CAN_MID_MIDE) == CAN_MID_MIDE) { //extended id
+  if ((ul_id & CAN_MID_MIDE) == CAN_MID_MIDE)   //extended id
+  {
     rxframe->id = ul_id & 0x1FFFFFFFu;
     rxframe->extended = true;
   }
-  else { //standard ID
+  else   //standard ID
+  {
     rxframe->id = (ul_id  >> CAN_MID_MIDvA_Pos) & 0x7ffu;
     rxframe->extended = false;
   }
@@ -799,15 +880,23 @@ uint32_t CAN_SAM3X8E::mailbox_read(uint8_t uc_index, volatile CAN_FRAME *rxframe
   rxframe->length = (ul_status & CAN_MSR_MDLC_Msk) >> CAN_MSR_MDLC_Pos;
   ul_datal = m_pCan->CAN_MB[uc_index].CAN_MDL;
   ul_datah = m_pCan->CAN_MB[uc_index].CAN_MDH;
-
-  rxframe->data.high = ul_datah;
-  rxframe->data.low = ul_datal;
+  rxframe->data[0] = (uint8_t)(ul_datal & 0xFF);
+  rxframe->data[1] = (uint8_t)((ul_datal >> 8) & 0xFF);
+  rxframe->data[2] = (uint8_t)((ul_datal >> 16) & 0xFF);
+  rxframe->data[3] = (uint8_t)((ul_datal >> 24) & 0xFF);
+  rxframe->data[4] = (uint8_t)(ul_datah & 0xFF);
+  rxframe->data[5] = (uint8_t)((ul_datah >> 8) & 0xFF);
+  rxframe->data[6] = (uint8_t)((ul_datah >> 16) & 0xFF);
+  rxframe->data[7] = (uint8_t)((ul_datah >> 24) & 0xFF);
 
   /* Read the mailbox status again to check whether the software needs to re-read mailbox data register. */
   ul_status = m_pCan->CAN_MB[uc_index].CAN_MSR;
-  if (ul_status & CAN_MSR_MMI) {
+  if (ul_status & CAN_MSR_MMI)
+  {
     ul_retval |= CAN_MAILBOX_RX_NEED_RD_AGAIN;
-  } else {
+  }
+  else
+  {
     ul_retval |= CAN_MAILBOX_TRANSFER_OK;
   }
 
@@ -821,20 +910,25 @@ uint32_t CAN_SAM3X8E::mailbox_read(uint8_t uc_index, volatile CAN_FRAME *rxframe
 void CAN_SAM3X8E::mailbox_set_id(uint8_t uc_index, uint32_t id, bool extended)
 {
   if (uc_index > CANMB_NUMBER - 1) uc_index = CANMB_NUMBER - 1;
-  if (extended) {
+  if (extended)
+  {
     m_pCan->CAN_MB[uc_index].CAN_MID = id | CAN_MID_MIDE;
   }
-  else {
+  else
+  {
     m_pCan->CAN_MB[uc_index].CAN_MID = CAN_MID_MIDvA(id);
   }
 }
 
-uint32_t CAN_SAM3X8E::mailbox_get_id(uint8_t uc_index) {
+uint32_t CAN_SAM3X8E::mailbox_get_id(uint8_t uc_index)
+{
   if (uc_index > CANMB_NUMBER - 1) uc_index = CANMB_NUMBER - 1;
-  if (m_pCan->CAN_MB[uc_index].CAN_MID & CAN_MID_MIDE) {
+  if (m_pCan->CAN_MB[uc_index].CAN_MID & CAN_MID_MIDE)
+  {
     return m_pCan->CAN_MB[uc_index].CAN_MID;
   }
-  else {
+  else
+  {
     return (m_pCan->CAN_MB[uc_index].CAN_MID >> CAN_MID_MIDvA_Pos) & 0x7ffu;
   }
 }
@@ -848,23 +942,28 @@ void CAN_SAM3X8E::mailbox_set_priority(uint8_t uc_index, uint8_t pri)
 void CAN_SAM3X8E::mailbox_set_accept_mask(uint8_t uc_index, uint32_t mask, bool ext)
 {
   if (uc_index > CANMB_NUMBER - 1) uc_index = CANMB_NUMBER - 1;
-  if (ext) {
+  if (ext)
+  {
     m_pCan->CAN_MB[uc_index].CAN_MAM = mask | CAN_MAM_MIDE;
     m_pCan->CAN_MB[uc_index].CAN_MID |= CAN_MAM_MIDE;
-  } else {
+  }
+  else
+  {
     m_pCan->CAN_MB[uc_index].CAN_MAM = CAN_MAM_MIDvA(mask);
     m_pCan->CAN_MB[uc_index].CAN_MID &= ~CAN_MAM_MIDE;
   }
 }
 
-void CAN_SAM3X8E::mailbox_set_mode(uint8_t uc_index, uint8_t mode) {
+void CAN_SAM3X8E::mailbox_set_mode(uint8_t uc_index, uint8_t mode)
+{
   if (uc_index > CANMB_NUMBER - 1) uc_index = CANMB_NUMBER - 1;
   if (mode > 5) mode = 0; //set disabled on invalid mode
   m_pCan->CAN_MB[uc_index].CAN_MMR = (m_pCan->CAN_MB[uc_index].CAN_MMR &
                                       ~CAN_MMR_MOT_Msk) | (mode << CAN_MMR_MOT_Pos);
 }
 
-uint8_t CAN_SAM3X8E::mailbox_get_mode(uint8_t uc_index) {
+uint8_t CAN_SAM3X8E::mailbox_get_mode(uint8_t uc_index)
+{
   if (uc_index > CANMB_NUMBER - 1) uc_index = CANMB_NUMBER - 1;
   return (uint8_t)(m_pCan->CAN_MB[uc_index].CAN_MMR >> CAN_MMR_MOT_Pos) & 0x7;
 }
@@ -876,12 +975,14 @@ void CAN_SAM3X8E::mailbox_set_databyte(uint8_t uc_index, uint8_t bytepos, uint8_
   if (uc_index > CANMB_NUMBER - 1) uc_index = CANMB_NUMBER - 1;
   if (bytepos > 7) bytepos = 7;
   shift = 8 * (bytepos & 3); //how many bytes to shift up into position
-  if (bytepos < 4) { //low data block
+  if (bytepos < 4)   //low data block
+  {
     working = m_pCan->CAN_MB[uc_index].CAN_MDL & ~(255 << shift); //mask out where we have to be
     working |= (val << shift);
     m_pCan->CAN_MB[uc_index].CAN_MDL = working;
   }
-  else { //high data block
+  else   //high data block
+  {
     working = m_pCan->CAN_MB[uc_index].CAN_MDH & ~(255 << shift); //mask out where we have to be
     working |= (val << shift);
     m_pCan->CAN_MB[uc_index].CAN_MDH = working;
@@ -927,7 +1028,8 @@ uint32_t CAN_SAM3X8E::mailbox_tx_frame(uint8_t uc_index)
 
   /* Read the mailbox status firstly to check whether the mailbox is ready or not. */
   ul_status = m_pCan->CAN_MB[uc_index].CAN_MSR;
-  if (!(ul_status & CAN_MSR_MRDY)) {
+  if (!(ul_status & CAN_MSR_MRDY))
+  {
     return CAN_MAILBOX_NOT_READY;
   }
 
@@ -941,10 +1043,14 @@ uint32_t CAN_SAM3X8E::mailbox_tx_frame(uint8_t uc_index)
 /**
 * \brief Find unused RX mailbox and return its number
 */
-int CAN_SAM3X8E::findFreeRXMailbox() {
-  for (int c = 0; c < 8; c++) {
-    if (mailbox_get_mode(c) == CAN_MB_RX_MODE) {
-      if (mailbox_get_id(c) == 0) {
+int CAN_SAM3X8E::findFreeRXMailbox()
+{
+  for (int c = 0; c < 8; c++)
+  {
+    if (mailbox_get_mode(c) == CAN_MB_RX_MODE)
+    {
+      if (mailbox_get_id(c) == 0)
+      {
         return c;
       }
     }
@@ -961,7 +1067,8 @@ int CAN_SAM3X8E::findFreeRXMailbox() {
 *
 * \ret number of mailbox we just used (or -1 if there are no free boxes to use)
 */
-int CAN_SAM3X8E::setRXFilter(uint32_t id, uint32_t mask, bool extended) {
+int CAN_SAM3X8E::setRXFilter(uint32_t id, uint32_t mask, bool extended)
+{
   int c = findFreeRXMailbox();
   if (c < 0) return -1;
 
@@ -979,7 +1086,8 @@ int CAN_SAM3X8E::setRXFilter(uint32_t id, uint32_t mask, bool extended) {
 * \param Rs pin to use for transceiver Rs control
 * \param En pin to use for transceiver enable
 */
-int CAN_SAM3X8E::setRXFilter(uint8_t mailbox, uint32_t id, uint32_t mask, bool extended) {
+int CAN_SAM3X8E::setRXFilter(uint8_t mailbox, uint32_t id, uint32_t mask, bool extended)
+{
   if (mailbox > 7) return -1;
 
   mailbox_set_accept_mask(mailbox, mask, extended);
@@ -994,8 +1102,10 @@ int CAN_SAM3X8E::setRXFilter(uint8_t mailbox, uint32_t id, uint32_t mask, bool e
  * \param mailbox - the index of the mailbox to get the IER for
  * \retval the IER of the specified mailbox
  */
-uint32_t CAN_SAM3X8E::getMailboxIer(int8_t mailbox) {
-  switch (mailbox) {
+uint32_t CAN_SAM3X8E::getMailboxIer(int8_t mailbox)
+{
+  switch (mailbox)
+  {
     case 0:
       return CAN_IER_MB0;
     case 1:
@@ -1020,10 +1130,13 @@ uint32_t CAN_SAM3X8E::getMailboxIer(int8_t mailbox) {
 * \brief Handle a mailbox interrupt event
 * \param mb which mailbox generated this event
 */
-void CAN_SAM3X8E::mailbox_int_handler(uint8_t mb, uint32_t ul_status) {
+void CAN_SAM3X8E::mailbox_int_handler(uint8_t mb, uint32_t ul_status)
+{
   if (mb > 7) mb = 7;
-  if (m_pCan->CAN_MB[mb].CAN_MSR & CAN_MSR_MRDY) { //mailbox signals it is ready
-    switch (((m_pCan->CAN_MB[mb].CAN_MMR >> 24) & 7)) { //what sort of mailbox is it?
+  if (m_pCan->CAN_MB[mb].CAN_MSR & CAN_MSR_MRDY)   //mailbox signals it is ready
+  {
+    switch (((m_pCan->CAN_MB[mb].CAN_MMR >> 24) & 7))   //what sort of mailbox is it?
+    {
       case 1: //receive
       case 2: //receive w/ overwrite
       case 4: //consumer - technically still a receive buffer
@@ -1032,16 +1145,18 @@ void CAN_SAM3X8E::mailbox_int_handler(uint8_t mb, uint32_t ul_status) {
         break;
       case 3: //transmit
         if (tx_buffer_head != tx_buffer_tail)
-        { //if there is a frame in the queue to send
+        {
+          //if there is a frame in the queue to send
           mailbox_set_id(mb, tx_frame_buff[tx_buffer_head].id, tx_frame_buff[tx_buffer_head].extended);
           mailbox_set_datalen(mb, tx_frame_buff[tx_buffer_head].length);
           mailbox_set_priority(mb, tx_frame_buff[tx_buffer_head].priority);
           for (uint8_t cnt = 0; cnt < 8; cnt++)
-            mailbox_set_databyte(mb, cnt, tx_frame_buff[tx_buffer_head].data.bytes[cnt]);
+            mailbox_set_databyte(mb, cnt, tx_frame_buff[tx_buffer_head].data[cnt]);
           global_send_transfer_cmd((0x1u << mb));
           tx_buffer_head = (tx_buffer_head + 1) % SAM3X8E_SIZE_TX_BUFFER;
         }
-        else {
+        else
+        {
           disable_interrupt(0x01 << mb);
         }
         break;
@@ -1060,5 +1175,11 @@ void CAN1_Handler(void)
 {
   CANbus1.interruptHandler();
 }
+
+/// instantiate the two canbus adapters
+//extern CAN_SAM3X8E CANbus0;
+//extern CAN_SAM3X8E CANbus1;
+CAN_SAM3X8E CANbus0(0);  // Create CAN channel on CAN bus 0
+CAN_SAM3X8E CANbus1(1);  // Create CAN channel on CAN bus 1
 
 #endif // defined(ARDUINO_ARCH_SAM)

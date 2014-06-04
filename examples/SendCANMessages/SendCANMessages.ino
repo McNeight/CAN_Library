@@ -73,7 +73,7 @@ void extendedMessage()
 
   extended_message.id = 0x02DACBF1; // Random Extended Message ID
   extended_message.rtr = 0;
-  extended_message.extended = 1;
+  extended_message.extended = CAN_EXTENDED_FRAME;
   extended_message.length = 8; // Data length
   memcpy(extended_message.data, message_data, sizeof(extended_message.data));
 
@@ -89,7 +89,7 @@ void standardMessage()
 
   standard_message.id = 0x555; // Random Standard Message ID
   standard_message.rtr = 0;
-  standard_message.extended = 0;
+  standard_message.extended = CAN_BASE_FRAME;
   standard_message.length = 5; // Data length in this case let's say 5
   // data message with an added counter
   standard_message.data[0] = 0x55;

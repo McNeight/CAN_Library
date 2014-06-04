@@ -294,9 +294,78 @@ void CAN_MCP2515::flush()
 {
 }
 
-uint8_t CAN_MCP2515::write(CAN_FRAME&)
+uint8_t CAN_MCP2515::write(CAN_FRAME& message)
 {
-  return false;
+  // Serial.print("id:");
+  // Serial.println(message.id, HEX);
+  byte i, id_high, id_low, ex_high, ex_low, status, loadBuffer, sendBuffer;
+  status = readStatus() & 0x54;
+  if (status != 0x54)
+  {
+    if ((status & 0x04) == 0)   //transmit buffer 0 is open
+    {
+      loadBuffer = MCP2515_LOAD_TX_BUF_0_ID;
+      sendBuffer = MCP2515_SEND_TX_BUF_0;
+    }
+    else if ((status & 0x10) == 0)   //transmit buffer 1 is open
+    {
+      loadBuffer = MCP2515_LOAD_TX_BUF_1_ID;
+      sendBuffer = MCP2515_SEND_TX_BUF_1;
+    }
+    else   // transmit buffer 2 is open
+    {
+      loadBuffer = MCP2515_LOAD_TX_BUF_2_ID;
+      sendBuffer = MCP2515_SEND_TX_BUF_2;
+    }
+  }
+
+  //if(bitRead ((ID),27)==1){// might use this later to remove Frame Type. It works for right now....
+  if (message.extended == CAN_EXTENDED_FRAME)
+  {
+    //generate id bytes before SPI write
+    id_high = (message.id >> 21);
+    id_low = (message.id >> 18);
+    id_low = ((id_low) << 5 | 0x08);
+    if (bitRead ((message.id), 17) == 1) bitSet(id_low, 1);
+    if (bitRead ((message.id), 16) == 1) bitSet(id_low, 0);
+    // Serial.print("id_high:");
+    // Serial.print(id_high, HEX);
+    // Serial.print(" id_low:");
+    // Serial.println(id_low, HEX);
+    ex_high = (message.id) >> 8;
+    ex_low = (message.id) >> 0;
+    digitalWrite(CS, LOW);
+    SPI.transfer(loadBuffer);
+    SPI.transfer(id_high); //ID high bits
+    SPI.transfer(id_low); //ID low bits
+    SPI.transfer(ex_high); //extended ID high bits
+    SPI.transfer(ex_low); //extended ID low bits
+    SPI.transfer(message.length);
+    for (i = 0; i < message.length; i++)   //load data buffer
+    {
+      SPI.transfer(message.data[i]);
+    }
+  }
+  else if (message.extended == CAN_BASE_FRAME)
+  {
+    id_high = (byte) (message.id >> 3);
+    id_low = (byte) ((message.id << 5) & 0x00E0);
+    digitalWrite(CS, LOW);
+    SPI.transfer(loadBuffer);
+    SPI.transfer(id_high); //ID high bits
+    SPI.transfer(id_low); //ID low bits
+    SPI.transfer(0x00); //extended ID registers
+    SPI.transfer(0x00);
+    SPI.transfer(message.length); //data length code
+    for (i = 0; i < message.length; i++)   //load data buffer
+    {
+      SPI.transfer(message.data[i]);
+    }
+  }
+  digitalWrite(CS, HIGH);
+  digitalWrite(CS, LOW);
+  SPI.transfer(sendBuffer);
+  digitalWrite(CS, HIGH);
 }
 
 

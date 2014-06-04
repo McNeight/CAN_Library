@@ -37,9 +37,10 @@
  */
 
 #if defined(ARDUINO_ARCH_AVR)
-CAN_MCP2515 CANbus(10); // Create CAN channel using pin 10 for SPI chip select
+CAN_MCP2515 CANbus0(10); // Create CAN channel using pin 10 for SPI chip select
 #elif defined(ARDUINO_ARCH_SAM)
-CAN_SAM3X8E CANbus(0);  // Create CAN channel on CAN bus 0
+//CAN_SAM3X8E CANbus0(0);  // Create CAN channel on CAN bus 0
+//CAN_SAM3X8E CANbus1(1);  // Create CAN channel on CAN bus 1
 #else
 #error “This library only supports boards with an AVR or SAM processor.”
 #endif
@@ -52,7 +53,7 @@ void setup()
 
   //Set CAN speed. Note: Speed is now 500kbit/s so adjust your CAN monitor
 
-  CANbus.begin(bitrate);
+  CANbus0.begin(bitrate);
 
   delay(4000);  // Delay added just so we can have time to open up Serial Monitor and CAN bus monitor. It can be removed later...
 
@@ -64,9 +65,9 @@ void setup()
 
 void readMessage()
 {
-  if (CANbus.available() == true) // Check to see if a valid message has been received.
+  if (CANbus0.available() == true) // Check to see if a valid message has been received.
   {
-    message = CANbus.read(); //read message, it will follow the CAN structure of ID,RTR, legnth, data. Allows both Extended or Standard
+    message = CANbus0.read(); //read message, it will follow the CAN structure of ID,RTR, legnth, data. Allows both Extended or Standard
 
     Serial.print(millis());
     Serial.print(F(",0x"));
