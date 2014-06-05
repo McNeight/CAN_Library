@@ -50,7 +50,7 @@ typedef struct {
   WoReg  CAN_IDR;       /**< \brief (Can Offset: 0x0008) Interrupt Disable Register
   RoReg  CAN_IMR;       /**< \brief (Can Offset: 0x000C) Interrupt Mask Register
   RoReg  CAN_SR;        /**< \brief (Can Offset: 0x0010) Status Register
-  RwReg  CAN_BR;        /**< \brief (Can Offset: 0x0014) Baudrate Register
+  RwReg  CAN_BR;        /**< \brief (Can Offset: 0x0014) Bitrate Register
   RoReg  CAN_TIM;       /**< \brief (Can Offset: 0x0018) Timer Register
   RoReg  CAN_TIMESTP;   /**< \brief (Can Offset: 0x001C) Timestamp Register
   RoReg  CAN_ECR;       /**< \brief (Can Offset: 0x0020) Error Counter Register
@@ -81,7 +81,7 @@ typedef struct {
 #define SAM3X8E_MODE_NORMAL    0
 #define SAM3X8E_MODE_SLEEP     1 // Low-power mode
 //#define SAM3X8E_MODE_LOOPBACK  2
-#define SAM3X8E_MODE_LISTEN    3 // Auto-baud mode
+#define SAM3X8E_MODE_LISTEN    3 // Auto-bitrate mode
 #define SAM3X8E_MODE_CONFIG    4 // disabled?
 
 /** Define the Mailbox mask for eight mailboxes. */
@@ -113,10 +113,10 @@ class CAN_SAM3X8E : public CANClass
     // Constructor
     CAN_SAM3X8E();
     CAN_SAM3X8E(uint8_t bus);
-    void begin (uint32_t baud) {
-      begin(baud, SAM3X8E_MODE_NORMAL);
+    void begin (uint32_t bitrate) {
+      begin(bitrate, SAM3X8E_MODE_NORMAL);
     };// Initializes CAN communications into Normal mode. Note it also starts SPI communications
-    void begin (uint32_t baud, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
+    void begin (uint32_t bitrate, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
     void end();
     uint8_t available();
     CAN_FRAME read();
@@ -168,14 +168,14 @@ class CAN_SAM3X8E : public CANClass
     uint8_t mailbox_get_mode(uint8_t uc_index);
     uint32_t mailbox_get_id(uint8_t uc_index);
     uint32_t getMailboxIer(int8_t mailbox);
-    uint32_t set_baudrate(uint32_t ul_baudrate);
-    uint32_t init(uint32_t ul_baudrate);
+    uint32_t set_bitrate(uint32_t ul_bitrate);
+    uint32_t init(uint32_t ul_bitrate);
     void enable();
     void disable();
     void disable_low_power_mode();
     void enable_low_power_mode();
-    void disable_autobaud_listen_mode();
-    void enable_autobaud_listen_mode();
+    void disable_autobitrate_listen_mode();
+    void enable_autobitrate_listen_mode();
     void disable_overload_frame();
     void enable_overload_frame();
     void set_timestamp_capture_point(uint32_t ul_flag);
@@ -212,10 +212,7 @@ class CAN_SAM3X8E : public CANClass
     void mailbox_set_datalen(uint8_t uc_index, uint8_t dlen);
     void mailbox_set_datal(uint8_t uc_index, uint32_t val);
     void mailbox_set_datah(uint8_t uc_index, uint32_t val);
-    //void sendFrame(CAN_FRAME& txFrame);
-
     void reset_all_mailbox();
-    //uint32_t get_rx_buff(CAN_FRAME &);
 };
 
 extern CAN_SAM3X8E CANbus0;

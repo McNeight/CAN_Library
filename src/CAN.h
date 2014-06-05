@@ -59,113 +59,28 @@ DATE		VER		WHO			WHAT
 #define CAN_BPS_125K                  125000
 #define CAN_BPS_100K                  100000
 #define CAN_BPS_50K                   50000
-#define CAN_BPS_33333				  33333
+#define CAN_BPS_33333                 33333
 #define CAN_BPS_25K                   25000
 #define CAN_BPS_20K                   20000
 #define CAN_BPS_10K                   10000
 #define CAN_BPS_5K                    5000
 
-// CAN Message Structures
-// typedef struct
-// {
-// byte start_of_frame : 1;
-// unsigned int identifier : 11;
-// byte rtr : 1;
-// byte dlc : 4;
-// unsigned int crc : 15;
-// byte ack : 2;
-// byte eof : 7;
-// } CAN_DATA_FRAME_COMPLETE;
-
-// #if defined(ARDUINO_ARCH_SAM)
-// //This is architecture specific. DO NOT USE THIS UNION ON ANYTHING OTHER THAN THE CORTEX M3 / Arduino Due
-// //UNLESS YOU DOUBLE CHECK THINGS!
-// typedef union {
-  // uint64_t value;
-  // struct {
-    // uint32_t low;
-    // uint32_t high;
-  // };
-  // struct {
-    // uint16_t s0;
-    // uint16_t s1;
-    // uint16_t s2;
-    // uint16_t s3;
-  // };
-  // uint8_t bytes[8];
-// } BytesUnion;
-
-// typedef struct
-// {
-  // uint32_t id : 29;		// EID if ide set, SID otherwise
-  // uint8_t valid : 1;  // To avoid passing garbage frames around
-  // uint8_t rtr : 1;		// Remote Transmission Request
-  // uint8_t extended : 1;	// Extended ID flag
-  // uint32_t fid;		// family ID
-  // uint8_t priority : 4;	// Priority but only important for TX frames and then only for special uses.
-  // uint8_t length : 4;		// Number of data bytes
-  // BytesUnion data;	// 64 bits - lots of ways to access it.
-// } CAN_FRAME;
-
-// #elif defined(ARDUINO_ARCH_AVR)
-
 typedef struct
 {
-  uint32_t id : 29;		// EID if ide set, SID otherwise
-  uint8_t valid : 1;  // To avoid passing garbage frames around
-  uint8_t rtr : 1; 			// Remote Transmission Request
-  uint8_t extended : 1;	// Extended ID flag
-  uint32_t fid;		// family ID
-  uint8_t priority : 4;	// Priority but only important for TX frames and then only for special uses.
-  uint8_t length : 4; 		// Data Length
-  uint8_t data[8]; 			// Message data
+  uint32_t id : 29;      // if (ide == CAN_RECESSIVE) { extended ID } else { standard ID }
+  uint8_t valid : 1;     // To avoid passing garbage frames around
+  uint8_t rtr : 1;       // Remote Transmission Request Bit
+  uint8_t extended : 1;  // Identifier Extension Bit
+  uint32_t fid;          // family ID
+  uint8_t priority : 4;	 // Priority but only important for TX frames and then only for special uses.
+  uint8_t length : 4;    // Data Length
+  uint8_t data[8]; 			 // Message data
 } CAN_FRAME;
-
-//#endif // CAN_FRAME
-
-// SAE J1939 Message Structures
-// Also:
-//   ISO 11783 (ISOBUS or ISO Bus)
-//   NMEA 2000
-typedef struct
-{
-  uint32_t ID : 29; 			// Identifier
-  uint8_t PRIO : 3; 		// Message priority
-  uint16_t PGN; 	// Parameter Group Number
-  uint8_t SA; 		// Source Address
-  uint8_t DA; 		// Destination Address
-  uint8_t DLC : 4; 		// Data length code
-  uint8_t data[8];		// Message data
-} CAN_DATA_FRAME_J1939;
-
-
-// CANopen Message Structures
-typedef struct
-{
-  uint16_t COB_ID		: 11; 	// Communication object identifier
-  uint8_t FC			: 4;	// Function Code
-  uint8_t NODE		: 7;	// Node
-  uint8_t rtr			: 1;	// Remote Transmission Request
-  uint8_t length		: 4;	// Data Length
-  uint8_t data[8]; 			// Message data
-} CAN_DATA_FRAME_CANopen;
-
-
-// CANaerospace Message Structures
-typedef struct
-{
-  uint16_t ID : 11;
-  uint8_t NODE;
-  uint8_t TYPE;
-  uint8_t SERVICE;
-  uint8_t MESSAGE;
-  uint8_t data[4];
-} CAN_DATA_FRAME_CANaerospace;
 
 class CANClass // Can't inherit from Stream
 {
   public:
-    virtual void begin(uint32_t baud);
+    virtual void begin(uint32_t bitrate);
     virtual void end();
     virtual uint8_t available();
     virtual CAN_FRAME read();

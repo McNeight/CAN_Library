@@ -31,8 +31,8 @@
 #define bitrate CAN_BPS_500K // define CAN speed (bitrate)
 
 // data counter just to show a dynamic change in data messages
-uint8_t extended_counter = 0;
-uint8_t standard_counter = 0;
+uint32_t extended_counter = 0;
+uint16_t standard_counter = 0;
 
 /*
   Second we create CANbus object (CAN channel) and select SPI CS Pin. Do not use "CAN" by itself as it will cause compile errors.
@@ -68,13 +68,24 @@ void setup()
 void extendedMessage()
 {
   CAN_FRAME extended_message; // Create message object to use CAN message structure
-  // There are at least two ways to put data into the message; memcpy() and individual arrays
-  uint8_t message_data[] = {0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, extended_counter}; // data message with an added counter
 
-  extended_message.id = 0x02DACBF1; // Random Extended Message ID
+  // There are at least two ways to put data into the message; memcpy() and individual arrays
+  uint8_t message_data[8] = { 0 }; // data message with an added counter
+
+  extended_message.id = extended_counter + 0x800; // Random Extended Message ID
+  extended_message.valid = true;
   extended_message.rtr = 0;
   extended_message.extended = CAN_EXTENDED_FRAME;
+  // Serial.print("extended_message.extended:");
+  // Serial.println(extended_message.extended);
+
   extended_message.length = 8; // Data length
+  uint32_t timehack = millis();
+  message_data[0] = 0x55;
+  message_data[4] = (timehack >> 24);
+  message_data[5] = (timehack >> 16);
+  message_data[6] = (timehack >> 8);
+  message_data[7] = (timehack & 0xF);
   memcpy(extended_message.data, message_data, sizeof(extended_message.data));
 
   CANbus.write(extended_message); // Load message and send
@@ -87,16 +98,21 @@ void standardMessage()
 {
   CAN_FRAME standard_message; // Create message object to use CAN message structure
 
-  standard_message.id = 0x555; // Random Standard Message ID
+  standard_message.id = standard_counter; // Random Standard Message ID
+  standard_message.valid = true;
   standard_message.rtr = 0;
   standard_message.extended = CAN_BASE_FRAME;
+  //Serial.print("standard_message.extended:");
+  //Serial.println(standard_message.extended);
+
   standard_message.length = 5; // Data length in this case let's say 5
+  uint32_t timehack = millis();
   // data message with an added counter
   standard_message.data[0] = 0x55;
-  standard_message.data[1] = 0xAA;
-  standard_message.data[2] = 0x55;
-  standard_message.data[3] = 0xAA;
-  standard_message.data[4] = standard_counter;
+  standard_message.data[1] = (timehack >> 24);
+  standard_message.data[2] = (timehack >> 16);
+  standard_message.data[3] = (timehack >> 8);
+  standard_message.data[4] = (timehack & 0xF);
 
   CANbus.write(standard_message); // Load message and send
   standard_counter++; // increase count

@@ -42,7 +42,7 @@ Two receive buffers
 Three Transmit Buffers
 SPI Interface
 
-Supported Baud rates
+Supported bitrates:
 10 kbps; 20 kbps; 50 kbps; 100 kbps; 125 kbps; 250 kbps; 500 kbps; 1000 kbps
 
 Intended to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand-Alone CAN Controller and MCP2561 High-Speed CAN Transceivers.
@@ -459,55 +459,50 @@ class CAN_MCP2515 : public CANClass
   public:
     CAN_MCP2515();// Use pin 10 for SPI CS. Allows multiple CAN channels.
     CAN_MCP2515(uint8_t CS_Pin);// SPI CS is selectable through sketch. Allows multiple CAN channels.
-    void begin (uint32_t baud) {
-      begin(baud, MCP2515_MODE_NORMAL);
+    void begin (uint32_t bitrate)
+    {
+      begin(bitrate, MCP2515_MODE_NORMAL);
     }; // Initializes CAN communications into Normal mode. Note it also starts SPI communications
-    void begin (uint32_t baud, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
+    void begin (uint32_t bitrate, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
     void end();
     uint8_t available(); // check if message has been received on any of the buffers
     CAN_FRAME read();
-    uint8_t read(unsigned long *ID, byte *length_out, byte *data_out); // Receive and display any message (J1939, CANopen, CAN)
+    uint8_t read(uint32_t *ID, uint8_t *length_out, uint8_t *data_out); // Receive and display any message (J1939, CANopen, CAN)
     //    uint8_t read(CAN_FRAME& message); //Receive and display CAN message and allows use of the message structure for easier message handling
-    //    uint8_t read(CAN_DATA_FRAME_J1939 *message); //Receive and display J1939 message and allows use of the message structure for easier message handling
-    //    uint8_t read(CAN_DATA_FRAME_CANopen *message); //Receive and display CANopen message and allows use of the message structure for easier message handling
     void flush();
     uint8_t write(CAN_FRAME&);
-    uint8_t write(unsigned long ID, byte frameType, byte length, byte *data); // Load and send message. No RTS needed.
+    uint8_t write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t *data); // Load and send message. No RTS needed.
 
 
   private:
     void reset(); //CAN software reset. Also puts MCP2515 into config mode
-    byte readMode(); // reads CAN mode
-    unsigned long readRate(); // reads CANspeed
+    uint8_t readMode(); // reads CAN mode
+    uint32_t readRate(); // reads CANspeed
 
     void clearRxBuffers(); // clears all receive buffers
     void clearTxBuffers(); // clears all receive buffers
     void clearFilters();   // clears all filters and masks
 
-    void loadMsg(byte buffer, unsigned long ID, byte frameType, byte length, byte *data); //Load Standard Data Frame Message into TX buffer X. Note this only load message to buffer. RTS is needed to send message
-
-    void sendTx(byte buffer); //(RTS) Request to send individual TX buffers or all
-
     uint8_t CS; //SPI CS is selectable through sketch
     void _init();
 
-    // Make setting baud and mode only part of the constructor
-    void bitRate(unsigned long baud);//sets up CAN bit rate
-    void setMode(byte mode);//puts CAN controller in one of five modes
+    // Make setting bitrate and mode only part of the constructor
+    void bitRate(uint32_t bitrate);//sets up CAN bit rate
+    void setMode(uint8_t mode);//puts CAN controller in one of five modes
 
-    void writeAddress(byte address, byte value);// writes MCP2515 register addresses
-    byte readAddress(byte address); //reads MCP2515 registers
-    void modifyAddress(byte address, byte mask, byte value); // MCP2515 SPI bit modification commands
+    void writeAddress(uint8_t address, uint8_t value);// writes MCP2515 register addresses
+    uint8_t readAddress(uint8_t address); //reads MCP2515 registers
+    void modifyAddress(uint8_t address, uint8_t mask, uint8_t value); // MCP2515 SPI bit modification commands
 
-    byte readStatus(); //reads several status bits for transmit and receive functions.
-    byte readRXStatus(); //reads receive functions and filhits
+    uint8_t readStatus(); //reads several status bits for transmit and receive functions.
+    uint8_t readRXStatus(); //reads receive functions and filhits
 
     // OTHER USEFUL FUNCTIONS
 
     void enableRTSPins (); // Enable hardware request to send (RTS) pins if they are available. It allows messages to be send by driving MCP2515 RTS pins low.
-    void setInterrupts(byte mask, byte writeVal); //Enable/disable interrupts
-    void setMask(byte mask, byte b0, byte b1, byte b2, byte b3); // Set Masks for filters
-    void setFilter(byte filter, byte b0, byte b1, byte b2, byte b3); //Set Receive filters
+    void setInterrupts(uint8_t mask, uint8_t writeVal); //Enable/disable interrupts
+    void setMask(uint8_t mask, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3); // Set Masks for filters
+    void setFilter(uint8_t filter, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3); //Set Receive filters
 
 };
 

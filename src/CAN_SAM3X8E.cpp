@@ -30,8 +30,8 @@
 /* CAN timeout for synchronization. */
 #define CAN_TIMEOUT                100000
 
-/** The max value for CAN baudrate prescale. */
-#define CAN_BAUDRATE_MAX_DIV       128
+/** The max value for CAN bitrate prescale. */
+#define CAN_BITRATE_MAX_DIV       128
 
 /** Define the scope for TQ. */
 #define CAN_MIN_TQ_NUM             8
@@ -52,7 +52,7 @@ typedef struct
 } can_bit_timing_t;
 
 
-/** Values of bit time register for different baudrates, Sample point = ((1 + uc_prog + uc_phase1) / uc_tq) * 100%. */
+/** Values of bit time register for different bitrates, Sample point = ((1 + uc_prog + uc_phase1) / uc_tq) * 100%. */
 const can_bit_timing_t can_bit_time[] =
 {
   {8,   (2 + 1), (1 + 1), (1 + 1), (2 + 1), 75},
@@ -110,7 +110,7 @@ CAN_SAM3X8E::CAN_SAM3X8E(uint8_t bus)
  * \brief Initialize CAN controller.
  *
  * \param ul_mck CAN module input clock.
- * \param ul_baudrate CAN communication baudrate in kbs.
+ * \param ul_bitrate CAN communication bitrates in kbps.
  *
  * \retval 0 If failed to initialize the CAN module; otherwise successful.
  *
@@ -134,13 +134,13 @@ bool CAN_SAM3X8E::_init(uint8_t Rs, uint8_t En)
   m_Transceiver->Enable();
 }
 
-void CAN_SAM3X8E::begin(uint32_t baud, uint8_t mode)
+void CAN_SAM3X8E::begin(uint32_t bitrate, uint8_t mode)
 {
   uint32_t ul_flag;
   uint32_t ul_tick;
 
-  /* Initialize the baudrate for CAN module. */
-  ul_flag = set_baudrate(baud);
+  /* Initialize the bitrate for CAN module. */
+  ul_flag = set_bitrate(bitrate);
   if (ul_flag == 0)
   {
     //return 0;
@@ -371,14 +371,14 @@ void CAN_SAM3X8E::interruptHandler()
 
 
 /**
- * \brief Configure CAN baudrate.
+ * \brief Configure CAN bitrate.
  *
- * \param ul_baudrate Baudrate value (kB/s), allowed values:
+ * \param ul_bitrate bitrate value (kB/s), allowed values:
  *                    1000, 800, 500, 250, 125, 50, 25, 10, 5.
  *
- * \retval Set the baudrate successfully or not.
+ * \retval Set the bitrate successfully or not.
  */
-uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
+uint32_t CAN_SAM3X8E::set_bitrate(uint32_t ul_bitrate)
 {
   uint8_t uc_tq;
   uint8_t uc_prescale;
@@ -388,15 +388,15 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
 
   static uint32_t ul_mck = SystemCoreClock;
 
-  /* Check whether the baudrate prescale will be greater than the max divide value. */
-  if (((ul_mck + (ul_baudrate * CAN_MAX_TQ_NUM - 1)) /
-       (ul_baudrate * CAN_MAX_TQ_NUM)) > CAN_BAUDRATE_MAX_DIV)
+  /* Check whether the bitrate prescale will be greater than the max divide value. */
+  if (((ul_mck + (ul_bitrate * CAN_MAX_TQ_NUM - 1)) /
+       (ul_bitrate * CAN_MAX_TQ_NUM)) > CAN_BITRATE_MAX_DIV)
   {
     return 0;
   }
 
   /* Check whether the input MCK is too small. */
-  if (ul_mck  < ul_baudrate * CAN_MIN_TQ_NUM)
+  if (ul_mck  < ul_bitrate * CAN_MIN_TQ_NUM)
   {
     return 0;
   }
@@ -406,12 +406,12 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
 
   /* Initialize the remainder as the max value. When the remainder is 0, get the right TQ number. */
   ul_mod = 0xffffffff;
-  /* Find out the approximate Time Quantum according to the baudrate. */
+  /* Find out the approximate Time Quantum according to the bitrate. */
   for (uint8_t i = CAN_MIN_TQ_NUM; i <= CAN_MAX_TQ_NUM; i++)
   {
-    if ((ul_mck / (ul_baudrate * i)) <= CAN_BAUDRATE_MAX_DIV)
+    if ((ul_mck / (ul_bitrate * i)) <= CAN_BITRATE_MAX_DIV)
     {
-      ul_cur_mod = ul_mck % (ul_baudrate * i);
+      ul_cur_mod = ul_mck % (ul_bitrate * i);
       if (ul_cur_mod < ul_mod)
       {
         ul_mod = ul_cur_mod;
@@ -424,8 +424,8 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
     }
   }
 
-  /* Calculate the baudrate prescale value. */
-  uc_prescale = ul_mck / (ul_baudrate * uc_tq);
+  /* Calculate the bitrate prescale value. */
+  uc_prescale = ul_mck / (ul_bitrate * uc_tq);
 
   /* Get the right CAN BIT Timing group. */
   p_bit_time = (can_bit_timing_t *)&can_bit_time[uc_tq - CAN_MIN_TQ_NUM];
@@ -434,7 +434,7 @@ uint32_t CAN_SAM3X8E::set_baudrate(uint32_t ul_baudrate)
   //can_disable(m_pCan);
   m_pCan->CAN_MR &= ~CAN_MR_CANEN;
 
-  /* Write into the CAN baudrate register. */
+  /* Write into the CAN bitrate register. */
   m_pCan->CAN_BR = CAN_BR_PHASE2(p_bit_time->uc_phase2 - 1) |
                    CAN_BR_PHASE1(p_bit_time->uc_phase1 - 1) |
                    CAN_BR_PROPAG(p_bit_time->uc_prog - 1) |
@@ -451,7 +451,7 @@ void CAN_SAM3X8E::setNumTXBoxes(int txboxes)
   if (txboxes < 0) txboxes = 0;
   numTXBoxes = txboxes;
 
-  //Inialize RX boxen
+  //Initialize RX boxen
   for (c = 0; c < 8 - numTXBoxes; c++)
   {
     mailbox_set_mode(c, CAN_MB_RX_MODE);
@@ -510,19 +510,19 @@ void CAN_SAM3X8E::enable_low_power_mode()
 }
 
 /**
- * \brief Disable CAN Controller autobaud/listen mode.
+ * \brief Disable CAN Controller autobitrate/listen mode.
  *
  */
-void CAN_SAM3X8E::disable_autobaud_listen_mode()
+void CAN_SAM3X8E::disable_autobitrate_listen_mode()
 {
   m_pCan->CAN_MR &= ~CAN_MR_ABM;
 }
 
 /**
- * \brief Enable CAN Controller autobaud/listen mode.
+ * \brief Enable CAN Controller autobitrate/listen mode.
  *
  */
-void CAN_SAM3X8E::enable_autobaud_listen_mode()
+void CAN_SAM3X8E::enable_autobitrate_listen_mode()
 {
   m_pCan->CAN_MR |= CAN_MR_ABM;
 }
