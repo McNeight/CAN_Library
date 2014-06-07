@@ -113,7 +113,8 @@ class CAN_SAM3X8E : public CANClass
     // Constructor
     CAN_SAM3X8E();
     CAN_SAM3X8E(uint8_t bus);
-    void begin (uint32_t bitrate) {
+    void begin (uint32_t bitrate)
+    {
       begin(bitrate, SAM3X8E_MODE_NORMAL);
     };// Initializes CAN communications into Normal mode. Note it also starts SPI communications
     void begin (uint32_t bitrate, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
@@ -137,8 +138,8 @@ class CAN_SAM3X8E : public CANClass
     volatile CAN_FRAME rx_frame_buff[SAM3X8E_SIZE_RX_BUFFER];
     volatile CAN_FRAME tx_frame_buff[SAM3X8E_SIZE_TX_BUFFER];
 
-    volatile uint16_t rx_buffer_head, rx_buffer_tail;
-    volatile uint16_t tx_buffer_head, tx_buffer_tail;
+    volatile uint8_t rx_buffer_head, rx_buffer_tail;
+    volatile uint8_t tx_buffer_head, tx_buffer_tail;
     void mailbox_int_handler(uint8_t mb, uint32_t ul_status);
 
   private:

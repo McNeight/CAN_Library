@@ -43,27 +43,38 @@ DATE		VER		WHO			WHAT
 #include <Arduino.h>
 
 // From the spec
-#define CAN_DOMINANT    0
-#define CAN_RECESSIVE   1
+#define CAN_DOMINANT                   0
+#define CAN_RECESSIVE                  1
 
-// Base and Extended ID defines
-#define CAN_BASE_FRAME                0
-#define CAN_EXTENDED_FRAME            1
+// Standard and Extended ID defines
+#define CAN_STANDARD_FRAME             0
+#define CAN_EXTENDED_FRAME             1
+
+// For an 11 bit standard frame ID within a 16 bit variable, the first 5
+// bits [15:11] are ignored
+#define CAN_STANDARD_ID_MASK           0x07FF
+
+// For a 29 bit extended frame ID within a 32 bit variable, the first 3
+// bits [31:29] are ignored
+#define CAN_EXTENDED_ID_MASK           0x1FFFFFFF
+
+//
 
 // Define the typical bitrate for CAN communication in kbps.
-#define CAN_BPS_1M                    1000000
-#define CAN_BPS_1000K                 1000000
-#define CAN_BPS_800K                  800000
-#define CAN_BPS_500K                  500000
-#define CAN_BPS_250K                  250000
-#define CAN_BPS_125K                  125000
-#define CAN_BPS_100K                  100000
-#define CAN_BPS_50K                   50000
-#define CAN_BPS_33333                 33333
-#define CAN_BPS_25K                   25000
-#define CAN_BPS_20K                   20000
-#define CAN_BPS_10K                   10000
-#define CAN_BPS_5K                    5000
+#define CAN_BPS_1M                     1000000
+#define CAN_BPS_1000K                  1000000
+#define CAN_BPS_800K                   800000
+#define CAN_BPS_500K                   500000
+#define CAN_BPS_250K                   250000
+#define CAN_BPS_125K                   125000
+#define CAN_BPS_100K                   100000
+#define CAN_BPS_83K                    83333  // According to ARINC 825, this is a thing
+#define CAN_BPS_50K                    50000
+#define CAN_BPS_33333                  33333
+#define CAN_BPS_25K                    25000
+#define CAN_BPS_20K                    20000
+#define CAN_BPS_10K                    10000
+#define CAN_BPS_5K                     5000
 
 typedef struct
 {

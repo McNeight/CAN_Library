@@ -72,7 +72,7 @@ void extendedMessage()
   // There are at least two ways to put data into the message; memcpy() and individual arrays
   uint8_t message_data[8] = { 0 }; // data message with an added counter
 
-  extended_message.id = extended_counter + 0x800; // Random Extended Message ID
+  extended_message.id = extended_counter + 0x02DACBF1; // Random Extended Message ID
   extended_message.valid = true;
   extended_message.rtr = 0;
   extended_message.extended = CAN_EXTENDED_FRAME;
@@ -98,10 +98,10 @@ void standardMessage()
 {
   CAN_FRAME standard_message; // Create message object to use CAN message structure
 
-  standard_message.id = standard_counter; // Random Standard Message ID
+  standard_message.id = standard_counter + 0x555; // Random Standard Message ID
   standard_message.valid = true;
   standard_message.rtr = 0;
-  standard_message.extended = CAN_BASE_FRAME;
+  standard_message.extended = CAN_STANDARD_FRAME;
   //Serial.print("standard_message.extended:");
   //Serial.println(standard_message.extended);
 

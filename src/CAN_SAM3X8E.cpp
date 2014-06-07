@@ -868,12 +868,12 @@ uint32_t CAN_SAM3X8E::mailbox_read(uint8_t uc_index, volatile CAN_FRAME *rxframe
   ul_id = m_pCan->CAN_MB[uc_index].CAN_MID;
   if ((ul_id & CAN_MID_MIDE) == CAN_MID_MIDE)   //extended id
   {
-    rxframe->id = ul_id & 0x1FFFFFFFu;
+    rxframe->id = ul_id & CAN_EXTENDED_ID_MASK;
     rxframe->extended = true;
   }
   else   //standard ID
   {
-    rxframe->id = (ul_id  >> CAN_MID_MIDvA_Pos) & 0x7ffu;
+    rxframe->id = (ul_id  >> CAN_MID_MIDvA_Pos) & CAN_STANDARD_ID_MASK;
     rxframe->extended = false;
   }
   rxframe->fid = m_pCan->CAN_MB[uc_index].CAN_MFID;

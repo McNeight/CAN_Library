@@ -61,8 +61,6 @@ Designed to be used with ATMEL ATMega328P with Arduino bootloader, MCP2515 Stand
 ///							                                                ///
 ///////////////////////////////////////////////////////////////////
 
-
-
 //Initialize SPI communications and set MCP2515 into Config mode
 CAN_MCP2515::CAN_MCP2515()
 {
@@ -91,8 +89,10 @@ void CAN_MCP2515::begin(uint32_t bitrate, uint8_t mode)
   clearRxBuffers();
   clearTxBuffers();
   clearFilters();
-  bitRate(bitrate);//Set CAN bit rate
-  setMode(mode);//Set CAN mode
+  // enable Transmit Buffer Empty Interrupt Enable bits
+  //enableInterrupts(MCP2515_TXnIE, MCP2515_TXnIE);
+  bitRate(bitrate); //Set CAN bit rate
+  setMode(mode);    //Set CAN mode
 }
 
 
@@ -108,61 +108,65 @@ uint8_t CAN_MCP2515::available()
   // (msgStatus & 0x01) means message in RX buffer 0
   // (msgStatus & 0x02) means message in RX buffer 1
   // Returns number of messages available
-  return ((msgStatus & 0x01) + (msgStatus & 0x02));
+  return (msgStatus & MCP2515_STATUS_CANINTF_RXnIF);
 }
 
-
-//Receive and display CAN message. This allows use of the message structure for easier message handling. Note: This fucntion does not allow extended frames as by default CAN is standard frames.
+// Receive and display CAN message.
+// This allows use of the message structure for easier message handling.
 CAN_FRAME CAN_MCP2515::read()
 {
   CAN_FRAME message;
-  uint8_t len, i, buffer, msgStatus;
-  uint16_t sid_h, sid_l, eid8, eid0, temp, rxbDlc;
+  uint8_t buffer, msgStatus;
+  uint8_t RXBnSIDH, RXBnSIDL, RXBnEID8, RXBnEID0, RXBnDLC;
+
   msgStatus = readStatus();
 
-  digitalWrite(CS, LOW);
-  // (msgStatus & 0x01) means message in RX buffer 0
-  if (msgStatus & 0x01)
+  if (msgStatus & MCP2515_STATUS_CANINTF_RX0IF)
   {
-    SPI.transfer(MCP2515_READ_RX_BUF_0_ID);
+    buffer = MCP2515_READ_RX_BUFFER_0_ID;
   }
-  // (msgStatus & 0x02) means message in RX buffer 1
-  else if (msgStatus & 0x02)
+  else if (msgStatus & MCP2515_STATUS_CANINTF_RX1IF)
   {
-    SPI.transfer(MCP2515_READ_RX_BUF_1_ID);
+    buffer = MCP2515_READ_RX_BUFFER_1_ID;
   }
   else
   {
     // No message?
     message.valid = false;
-    digitalWrite(CS, HIGH);
     return message;
   }
-  sid_h = SPI.transfer(0xFF); //id high
-  sid_l = SPI.transfer(0xFF); //id low
-  eid8 = SPI.transfer(0xFF); //extended id high
-  eid0 = SPI.transfer(0xFF); //extended id low
-  rxbDlc = SPI.transfer(0xFF); // get bits and other data from MCP2515 RXB DLC buffer (it contains data and RTR)
-  len = ((rxbDlc) & 0x0F);
-  //len = (SPI.transfer(0xFF) & 0x0F); //data length
-  for (i = 0; i < len; i++)
+
+  digitalWrite(CS, LOW);
+  SPI.transfer(buffer);
+  RXBnSIDH = SPI.transfer(0xFF); // SID<10:3>
+  RXBnSIDL = SPI.transfer(0xFF); // SID<2:0>, SRR, IDE, EID<17:16>
+  RXBnEID8 = SPI.transfer(0xFF); // EID<15:8>
+  RXBnEID0 = SPI.transfer(0xFF); // EID<7:0>
+  RXBnDLC  = SPI.transfer(0xFF); // RTR, RB<1:0>, DLC<3:0>
+  message.length = (RXBnDLC & MCP2515_DLC);
+  for (int i = 0; i < message.length; i++)
   {
     message.data[i] = SPI.transfer(0xFF);
   }
   digitalWrite(CS, HIGH);
-  message.length = len;
-  message.rtr = bitRead(rxbDlc, MCP2515_RTR);
-  message.extended = bitRead (sid_l, MCP2515_IDE);
-  if (message.extended)   // check to see if this is an Extended ID Msg.
+
+  message.id = 0; // Make sure this is zeroed out
+  message.extended = bitRead(RXBnSIDL, MCP2515_IDE);
+  // check to see if this is an Extended ID Msg.
+  if (message.extended == CAN_EXTENDED_FRAME)
   {
-    temp = (sid_l & 0xE0) >> 3; // keep SID0, SID1 and SID2 from SIDL
-    sid_l = (sid_l & 0x03) | temp | ((sid_h & 0x07) << 5); //repack SIDL
-    sid_h = ((uint16_t) sid_h >> 3); //shift SIDH
-    message.id = (((uint32_t) sid_h << 24) | ((uint32_t) sid_l << 16 ) | ((uint32_t) eid8 << 8) | (eid0 << 0)); // repack message ID
+    message.id |= (RXBnSIDH << 21);                      // ID<28:21> = SIDH<7:0>
+    message.id |= ((RXBnSIDL & MCP2515_SIDL_SID) << 13); // ID<20:18> = SIDL<7:5>
+    message.id |= ((RXBnSIDL & MCP2515_SIDL_EID) << 16); // ID<17:16> = SIDL<1:0>
+    message.id |= (RXBnEID8 << 8);                       // ID<15:8>  = EID8<7:0>
+    message.id |= (RXBnEID0 << 0);                       // ID<7:0>   = EID0<7:0>
+    message.rtr = bitRead(RXBnDLC, MCP2515_RTR);
   }
-  else
+  else if (message.extended == CAN_STANDARD_FRAME)
   {
-    message.id = ((((uint16_t) sid_h) << 3) | ((sid_l & 0xE0) >> 5)); // Msg is standard frame.
+    message.id |= (RXBnSIDH << 3);                       // ID<10:3> = SIDH<7:0>
+    message.id |= ((RXBnSIDL & MCP2515_SIDL_SID) >> 5);  // ID<2:0>  = SIDL<7:5>
+    message.rtr = bitRead(RXBnSIDL, MCP2515_SRR);
   }
   // everything checks out!
   message.valid = true;
@@ -170,53 +174,17 @@ CAN_FRAME CAN_MCP2515::read()
   return message;
 }
 
-
 // Receive and display any message (J1939, CANopen, CAN).
 // This functions provides an easy way to see the message if user doesn't care about the actual message protocol.
 // No message struct is used here.
-uint8_t CAN_MCP2515::read(uint32_t * ID, uint8_t * length_out, uint8_t * data_out)
+void CAN_MCP2515::read(uint32_t * ID, uint8_t * length_out, uint8_t * data_out)
 {
-  uint8_t len, i, buffer, msgStatus;
-  uint16_t sid_h, sid_l, eid8, eid0, temp;
-  msgStatus = readStatus();
-  if (msgStatus & 0x01)
-  {
-    buffer = MCP2515_READ_RX_BUF_0_ID;
-  }
-  else if (msgStatus & 0x02)
-  {
-    buffer = MCP2515_READ_RX_BUF_1_ID;
-  }
-  else
-  {
-    return false;
-  }
-  digitalWrite(CS, LOW);
-  SPI.transfer(buffer);
-  sid_h = SPI.transfer(0xFF); //id high
-  sid_l = SPI.transfer(0xFF); //id low
-  eid8 = SPI.transfer(0xFF); //extended id high
-  eid0 = SPI.transfer(0xFF); //extended id low
-  len = (SPI.transfer(0xFF) & 0x0F); //data length
-  for (i = 0; i < len; i++)
-  {
-    data_out[i] = SPI.transfer(0xFF);
-  }
-  digitalWrite(CS, HIGH);
-  (*length_out) = len;
-  if (bitRead (sid_l, MCP2515_IDE))   // check to see if this is an Extended ID Msg.
-  {
-    temp = (sid_l & 0xE0) >> 3; // keep SID0, SID1 and SID2 from SIDL
-    sid_l = (sid_l & 0x03) | temp | ((sid_h & 0x07) << 5); //repack SIDL
-    sid_h = ((uint16_t) sid_h >> 3); //shift SIDH
-    (*ID) = (((uint32_t) sid_h << 24) | ((uint32_t) sid_l << 16 ) | ((uint32_t) eid8 << 8) | (eid0 << 0)); // repack message
-  }
-  else
-  {
-    (*ID) = ((((uint16_t) sid_h) << 3) | ((sid_l & 0xE0) >> 5)); // Msg is standard frame.
-  }
+  CAN_FRAME message_to_be_parsed;
+  message_to_be_parsed = read();
+  (*ID) = message_to_be_parsed.id;
+  (*length_out) = message_to_be_parsed.length;
+  memcpy(data_out, message_to_be_parsed.data, sizeof(message_to_be_parsed.data));
 }
-
 
 void CAN_MCP2515::flush()
 {
@@ -226,155 +194,89 @@ void CAN_MCP2515::flush()
 
 uint8_t CAN_MCP2515::write(CAN_FRAME & message)
 {
-  // Serial.print("id:");
-  // Serial.println(message.id, HEX);
-  uint8_t i, id_high, id_low, ex_high, ex_low, msgStatus, loadBuffer, sendBuffer;
-  msgStatus = readStatus() & 0x54;
-  if (msgStatus != 0x54)
+  uint8_t TXBnSIDH, TXBnSIDL, TXBnEID8, TXBnEID0, TXBnDLC, msgStatus, loadBuffer, sendBuffer;
+  msgStatus = readStatus();
+
+  if (!(msgStatus & MCP2515_STATUS_TXB0CNTRL_TXREQ)) //transmit buffer 0 is open
   {
-    if ((msgStatus & 0x04)  == 0) //transmit buffer 0 is open
-    {
-      loadBuffer = MCP2515_LOAD_TX_BUF_0_ID;
-      sendBuffer = MCP2515_SEND_TX_BUF_0;
-    }
-    else if ((msgStatus & 0x10) == 0) //transmit buffer 1 is open
-    {
-      loadBuffer = MCP2515_LOAD_TX_BUF_1_ID;
-      sendBuffer = MCP2515_SEND_TX_BUF_1;
-    }
-    else   // transmit buffer 2 is open
-    {
-      loadBuffer = MCP2515_LOAD_TX_BUF_2_ID;
-      sendBuffer = MCP2515_SEND_TX_BUF_2;
-    }
+    loadBuffer = MCP2515_LOAD_TX_BUFFER_0_ID;
+    sendBuffer = MCP2515_RTS_TXB0;
+  }
+  else if (!(msgStatus & MCP2515_STATUS_TXB1CNTRL_TXREQ)) //transmit buffer 1 is open
+  {
+    loadBuffer = MCP2515_LOAD_TX_BUFFER_1_ID;
+    sendBuffer = MCP2515_RTS_TXB1;
+  }
+  else if (!(msgStatus & MCP2515_STATUS_TXB2CNTRL_TXREQ)) //transmit buffer 2 is open
+  {
+    loadBuffer = MCP2515_LOAD_TX_BUFFER_2_ID;
+    sendBuffer = MCP2515_RTS_TXB2;
+  }
+  else
+  {
+    // No transmit buffers available; no message sent
+    return 0;
   }
 
-  //Serial.print("message.extended:");
-  //Serial.println(message.extended);
-
-  //if(bitRead ((ID),27)==1){// might use this later to remove Frame Type. It works for right now....
+  TXBnDLC = (message.length & MCP2515_DLC);
   if (message.extended == CAN_EXTENDED_FRAME)
   {
     //generate id bytes before SPI write
-    id_high = (message.id >> 21);
-    id_low = (message.id >> 18);
-    id_low = ((id_low) << 5 | 0x08);
-    if (bitRead ((message.id), 17) == 1) bitSet(id_low, 1);
-    if (bitRead ((message.id), 16) == 1) bitSet(id_low, 0);
-    // Serial.print("id_high:");
-    // Serial.print(id_high, HEX);
-    // Serial.print(" id_low:");
-    // Serial.println(id_low, HEX);
-    ex_high = (message.id) >> 8;
-    ex_low = (message.id) >> 0;
-    digitalWrite(CS, LOW);
-    SPI.transfer(loadBuffer);
-    SPI.transfer(id_high); //ID high bits
-    SPI.transfer(id_low); //ID low bits
-    SPI.transfer(ex_high); //extended ID high bits
-    SPI.transfer(ex_low); //extended ID low bits
-    SPI.transfer(message.length);
-    for (i = 0; i < message.length; i++)   //load data buffer
+    TXBnSIDH  = (message.id >> 21);                      // SIDH<7:0> = ID<28:21>
+    TXBnSIDL  = ((message.id >> 13) & MCP2515_SIDL_SID); // SIDL<7:5> = ID<20:18>
+    TXBnSIDL |= ((message.id >> 16) & MCP2515_SIDL_EID); // SIDL<1:0> = ID<17:16>
+    bitSet(TXBnSIDL, MCP2515_IDE);
+    TXBnEID8  = (message.id >> 8);                       // EID8<7:0> = ID<15:8>
+    TXBnEID0  = (message.id >> 0);                       // EID0<7:0> = ID<7:0>
+    if (message.rtr)
     {
-      SPI.transfer(message.data[i]);
+      bitSet(TXBnDLC, MCP2515_RTR);
     }
   }
-  else if (message.extended == CAN_BASE_FRAME)
+  else if (message.extended == CAN_STANDARD_FRAME)
   {
-    id_high = (uint8_t) (message.id >> 3);
-    id_low = (uint8_t) ((message.id << 5) & 0x00E0);
-    digitalWrite(CS, LOW);
-    SPI.transfer(loadBuffer);
-    SPI.transfer(id_high); //ID high bits
-    SPI.transfer(id_low); //ID low bits
-    SPI.transfer(0x00); //extended ID registers
-    SPI.transfer(0x00);
-    SPI.transfer(message.length); //data length code
-    for (i = 0; i < message.length; i++)   //load data buffer
+    TXBnSIDH = (message.id >> 3);                        // SIDH<7:0> = ID<10:3>
+    TXBnSIDL = ((message.id << 5) & MCP2515_SIDL_SID);   // SIDL<7:5> = ID<2:0>
+    TXBnEID8 = 0x00; // zero out extended ID registers
+    TXBnEID0 = 0x00; // zero out extended ID registers
+    if (message.rtr)
     {
-      SPI.transfer(message.data[i]);
+      bitSet(TXBnSIDL, MCP2515_SRR);
     }
+  }
+
+  digitalWrite(CS, LOW);
+  SPI.transfer(loadBuffer);
+  SPI.transfer(TXBnSIDH); //ID high bits
+  SPI.transfer(TXBnSIDL); //ID low bits
+  SPI.transfer(TXBnEID8); //extended ID high bits
+  SPI.transfer(TXBnEID0); //extended ID low bits
+  SPI.transfer(TXBnDLC); //data length code
+  for (int i = 0; i < message.length; i++)   //load data buffer
+  {
+    SPI.transfer(message.data[i]);
   }
   digitalWrite(CS, HIGH);
   digitalWrite(CS, LOW);
   SPI.transfer(sendBuffer);
   digitalWrite(CS, HIGH);
+
+  return message.length;
 }
 
 
 // Function to load and send any message. (J1939, CANopen, CAN). It assumes user knows what the ID is supposed to be
 uint8_t CAN_MCP2515::write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t * data) // changed from send() to write()
 {
-  uint8_t i, id_high, id_low, ex_high, ex_low, msgStatus, loadBuffer, sendBuffer;
-  msgStatus = readStatus();
-  if (!(msgStatus & 0x04)) //transmit buffer 0 is open
-  {
-    loadBuffer = MCP2515_LOAD_TX_BUF_0_ID;
-    sendBuffer = MCP2515_SEND_TX_BUF_0;
-  }
-  else if (!(msgStatus & 0x10)) //transmit buffer 1 is open
-  {
-    loadBuffer = MCP2515_LOAD_TX_BUF_1_ID;
-    sendBuffer = MCP2515_SEND_TX_BUF_1;
-  }
-  else if (!(msgStatus & 0x40)) //transmit buffer 2 is open
-  {
-    loadBuffer = MCP2515_LOAD_TX_BUF_2_ID;
-    sendBuffer = MCP2515_SEND_TX_BUF_2;
-  }
-  else
-  {
-    // all transmit buffers are full; please try again later
-    return 0;
-  }
-  
-  //if(bitRead ((ID),27)==1){// might use this later to remove Frame Type. It works for right now....
-  if (frameType == CAN_EXTENDED_FRAME)
-  {
-    //generate id bytes before SPI write
-    id_high = (ID >> 21);
-    id_low = (ID >> 18);
-    id_low = ((id_low) << 5 | 0x08);
-    if (bitRead ((ID), 17) == 1) bitSet(id_low, 1);
-    if (bitRead ((ID), 16) == 1) bitSet(id_low, 0);
-    ex_high = (ID) >> 8;
-    ex_low = (ID) >> 0;
-    digitalWrite(CS, LOW);
-    SPI.transfer(loadBuffer);
-    SPI.transfer(id_high); //ID high bits
-    SPI.transfer(id_low); //ID low bits
-    SPI.transfer(ex_high); //extended ID high bits
-    SPI.transfer(ex_low); //extended ID low bits
-    SPI.transfer(length);
-    for (i = 0; i < length; i++)   //load data buffer
-    {
-      SPI.transfer(data[i]);
-    }
-  }
-  else if (frameType == CAN_BASE_FRAME)
-  {
-    id_high = (uint8_t) (ID >> 3);
-    id_low = (uint8_t) ((ID << 5) & 0x00E0);
-    digitalWrite(CS, LOW);
-    SPI.transfer(loadBuffer);
-    SPI.transfer(id_high); //ID high bits
-    SPI.transfer(id_low); //ID low bits
-    SPI.transfer(0x00); //extended ID registers
-    SPI.transfer(0x00);
-    SPI.transfer(length); //data length code
-    for (i = 0; i < length; i++)   //load data buffer
-    {
-      SPI.transfer(data[i]);
-    }
-  }
-  digitalWrite(CS, HIGH);
-  digitalWrite(CS, LOW);
-  SPI.transfer(sendBuffer);
-  digitalWrite(CS, HIGH);
+  CAN_FRAME message_to_be_sent;
+  message_to_be_sent.id = ID;
+  message_to_be_sent.length = length;
+  message_to_be_sent.extended = frameType;
+  memcpy(message_to_be_sent.data, data, sizeof(data));
+  return (write(message_to_be_sent));
 }
 
 // MCP2515 SPI INTERFACE COMMANDS
-
 // Reset command
 void CAN_MCP2515::reset()
 {
@@ -383,7 +285,7 @@ void CAN_MCP2515::reset()
   digitalWrite(CS, HIGH);
 }
 
-//Reads MCP2515 registers
+//Reads a single MCP2515 register
 uint8_t CAN_MCP2515::readAddress(uint8_t address)
 {
   digitalWrite(CS, LOW);
@@ -394,7 +296,7 @@ uint8_t CAN_MCP2515::readAddress(uint8_t address)
   return retVal;
 }
 
-// Writes MCP2515 registers
+// Writes a single MCP2515 register
 void CAN_MCP2515::writeAddress(uint8_t address, uint8_t value)
 {
   digitalWrite(CS, LOW);
@@ -404,7 +306,7 @@ void CAN_MCP2515::writeAddress(uint8_t address, uint8_t value)
   digitalWrite(CS, HIGH);
 }
 
-// Modify MCP2515 registers
+// Modifies a single MCP2515 register
 void CAN_MCP2515::modifyAddress(uint8_t address, uint8_t mask, uint8_t value)
 {
   digitalWrite(CS, LOW);
@@ -412,212 +314,6 @@ void CAN_MCP2515::modifyAddress(uint8_t address, uint8_t mask, uint8_t value)
   SPI.transfer(address);
   SPI.transfer(mask);
   SPI.transfer(value);
-  digitalWrite(CS, HIGH);
-}
-
-// MCP2515 INITIALIZATION COMMANDS.
-
-//MCP2515 can be set into 5 different modes: CONFIG, NORMAL,SLEEP,LISTEN, LOOPBACK
-void CAN_MCP2515::setMode(uint8_t mode)
-{
-  // (1 << MCP2515_REQOP0) | (1 << MCP2515_REQOP1) | (1 << MCP2515_REQOP2) = 0xE0
-  modifyAddress(MCP2515_CANCTRL, 0xE0, mode); //Writes config values to registers
-}
-
-// Function to read mode back
-uint8_t CAN_MCP2515::readMode()
-{
-  // (1 << MCP2515_REQOP0) | (1 << MCP2515_REQOP1) | (1 << MCP2515_REQOP2) = 0xE0
-  return (readAddress(MCP2515_CANSTAT) & 0xE0);
-}
-
-
-//Sets MCP2515 controller bitrate.
-// Configuration speeds are determined by Crystal Oscillator.
-// See MCP2515 datasheet Pg39 for more info.
-void CAN_MCP2515::bitRate(uint32_t bitrate)
-{
-  uint8_t config1, config2, config3;
-  if (bitrate == 10000)
-  {
-    config1 = 0x31; // Set BRP5, BRP4, and BRP0
-    config2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
-    config3 = 0x05; // Set PHSEG22 and PHSEG20
-  }
-  else if (bitrate == 20000)
-  {
-    config1 = 0x18;
-    config2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
-    config3 = 0x05; // Set PHSEG22 and PHSEG20
-  }
-  else if (bitrate == 50000)
-  {
-    config1 = 0x09;
-    config2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
-    config3 = 0x05; // Set PHSEG22 and PHSEG20
-  }
-  else if (bitrate == 100000)
-  {
-    config1 = 0x04;
-    config2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
-    config3 = 0x05; // Set PHSEG22 and PHSEG20
-  }
-  else if (bitrate == 125000)
-  {
-    config1 = 0x03;
-    config2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
-    config3 = 0x05; // Set PHSEG22 and PHSEG20
-  }
-  else if (bitrate == 250000)
-  {
-    config1 = 0x01; //config1 = 0x41; these are other configs for 500kb/s. need to confirm with current crystal osc @ 16mhz
-    config2 = 0xB8; //config2 = 0xF1;
-    config3 = 0x05; //config3 = 0x85;
-  }
-  else if (bitrate == 500000)
-  {
-    config1 = 0x00;
-    config2 = 0xB8; //config2 = 0xF0; these are other configs for 500kb/s. need to confirm with current crystal osc @ 16mhz
-    config3 = 0x05; //config3 = 0x86;
-  }
-  else if (bitrate == 1000000)
-  {
-    config1 = 0x00; //config1 = 0x80; these are other configs for 1Mb/s. need to confirm with current crystal osc @ 16mhz
-    config2 = 0xD0; //config2 = 0x90;
-    config3 = 0x82; //config3 = 0x02;
-  }
-  writeAddress(MCP2515_CNF1, config1);//Write config address 1
-  writeAddress(MCP2515_CNF2, config2);//Write config address 2
-  writeAddress(MCP2515_CNF3, config3);//Write config address 3
-}
-
-uint32_t CAN_MCP2515::readRate()
-{
-  uint8_t config1, config2, config3;
-  config1 = readAddress(MCP2515_CNF1);
-  config2 = readAddress(MCP2515_CNF2);
-  config3 = readAddress(MCP2515_CNF3);
-  if ((config2 == 0xB8) && (config3 == 0x05))
-  {
-    if (config1 == 0x31)
-    {
-      return 10000;
-    }
-    else if (config1 == 0x18)
-    {
-      return 20000;
-    }
-    else if (config1 == 0x09)
-    {
-      return 50000;
-    }
-    else if (config1 == 0x04)
-    {
-      return 100000;
-    }
-    else if (config1 == 0x03)
-    {
-      return 125000;
-    }
-    else if (config1 == 0x01)
-    {
-      return 250000;
-    }
-    else if (config1 == 0x00)
-    {
-      return 500000;
-    }
-  }
-  else if ((config1 == 0x00) && (config2 == 0xD0) && (config3 == 0x82))
-  {
-    return 1000000;
-  }
-  else
-  {
-    return 0;
-  }
-}
-
-//Turns RX filters/masks off. Will receive any message.
-void CAN_MCP2515::clearFilters()
-{
-  // (1 << MCP2515_RXM0) | (1 << MCP2515_RXM1) = 0x60
-  modifyAddress(MCP2515_RXB0CTRL, 0x60, 0x60);
-  modifyAddress(MCP2515_RXB1CTRL, 0x60, 0x60);
-}
-
-//Set Masks for filters
-void CAN_MCP2515::setMask(uint8_t mask, uint8_t data0, uint8_t data1, uint8_t data2, uint8_t data3)
-{
-  setMode(MCP2515_MODE_CONFIG);
-  writeAddress(mask, data0);
-  writeAddress(mask + 1, data1);
-  writeAddress(mask + 2, data2);
-  writeAddress(mask + 3, data3);
-  setMode(MCP2515_MODE_NORMAL);
-}
-
-// Set Receive Filters. Will think of a more user friendly way to set these in the future but for right now it works....
-void CAN_MCP2515::setFilter(uint8_t filter, uint8_t data0, uint8_t data1, uint8_t data2, uint8_t data3)
-{
-  setMode(MCP2515_MODE_CONFIG);
-  writeAddress(filter, data0);
-  writeAddress(filter + 1, data1);
-  writeAddress(filter + 2, data2);
-  writeAddress(filter + 3, data3);
-  setMode(MCP2515_MODE_NORMAL);
-}
-
-//At power up, MCP2515 buffers are not truly empty. There is random data in the registers
-//This loads buffers with zeros to prevent incorrect data to be sent.
-void CAN_MCP2515::clearRxBuffers()
-{
-  uint8_t writeVal = 0x00;
-  digitalWrite(CS, LOW);
-  SPI.transfer (MCP2515_SPI_WRITE);
-  SPI.transfer (MCP2515_RXB0SIDH);
-  for (uint8_t i = 0; i < 13; i++)
-  {
-    SPI.transfer(writeVal);
-  }
-  digitalWrite(CS, HIGH);
-  digitalWrite(CS, LOW);
-  SPI.transfer (MCP2515_SPI_WRITE);
-  SPI.transfer (MCP2515_RXB1SIDH);
-  for (uint8_t i = 0; i < 13; i++)
-  {
-    SPI.transfer(writeVal);
-  }
-  digitalWrite(CS, HIGH);
-}
-
-// This loads buffers with zeros to prevent incorrect data to be sent. Note: It RTS is sent to a buffer that has all zeros it will still send a message with all zeros.
-void CAN_MCP2515::clearTxBuffers()
-{
-  uint8_t writeVal = 0x00;
-  digitalWrite(CS, LOW);
-  SPI.transfer (MCP2515_SPI_WRITE);
-  SPI.transfer (MCP2515_TXB0SIDH);
-  for (uint8_t i = 0; i < 13; i++)
-  {
-    SPI.transfer(writeVal);
-  }
-  digitalWrite(CS, HIGH);
-  digitalWrite(CS, LOW);
-  SPI.transfer (MCP2515_SPI_WRITE);
-  SPI.transfer (MCP2515_TXB1SIDH);
-  for (uint8_t i = 0; i < 13; i++)
-  {
-    SPI.transfer(writeVal);
-  }
-  digitalWrite(CS, HIGH);
-  digitalWrite(CS, LOW);
-  SPI.transfer (MCP2515_SPI_WRITE);
-  SPI.transfer (MCP2515_TXB2SIDH);
-  for (uint8_t i = 0; i < 13; i++)
-  {
-    SPI.transfer(writeVal);
-  }
   digitalWrite(CS, HIGH);
 }
 
@@ -629,29 +325,9 @@ uint8_t CAN_MCP2515::readStatus()
   uint8_t retVal = SPI.transfer(0xFF);
   digitalWrite(CS, HIGH);
   return retVal;
-  /*
-  FIGURE 12-8: READ STATUS INSTRUCTION
-  bit 0: CANINTF.RX0IF
-  bit 1: CANINTF.RX1IF
-  bit 2: TXB0CNTRL.TXREQ
-  bit 3: CANINTF.TX0IF
-  bit 4: TXB1CNTRL.TXREQ
-  bit 5: CANINTF.TX1IF
-  bit 6: TXB2CNTRL.TXREQ
-  bit 7: CANINTF.TX2IF
-
-  (readStatus() & 0x01) == 0x01 means message in RX buffer 0
-  (readStatus() & 0x02) == 0x02 means message in RX buffer 1
-  (readStatus() & 0x04) == 0x04 means message in TX buffer 0
-  (readStatus() & 0x08) == 0x08 means Transmit Buffer 0 Empty Interrupt Flag set
-  (readStatus() & 0x10) == 0x10 means message in TX buffer 1
-  (readStatus() & 0x20) == 0x20 means Transmit Buffer 1 Empty Interrupt Flag set
-  (readStatus() & 0x40) == 0x40 means message in TX buffer 2
-  (readStatus() & 0x80) == 0x80 means Transmit Buffer 2 Empty Interrupt Flag set
-  */
 }
 
-//Function that reads receive functions and filhits
+//Function that reads receive functions and filter hits
 uint8_t CAN_MCP2515::readRXStatus()
 {
   digitalWrite(CS, LOW);
@@ -690,12 +366,220 @@ uint8_t CAN_MCP2515::readRXStatus()
     */
 }
 
+// MCP2515 INITIALIZATION COMMANDS.
+//MCP2515 can be set into 5 different modes: CONFIG, NORMAL, SLEEP, LISTEN, LOOPBACK
+void CAN_MCP2515::setMode(uint8_t mode)
+{
+  modifyAddress(MCP2515_CANCTRL, MCP2515_REQOPn, mode); //Writes config values to registers
+}
+
+// Function to read mode back
+uint8_t CAN_MCP2515::readMode()
+{
+  return (readAddress(MCP2515_CANSTAT) & MCP2515_REQOPn);
+}
+
+//Sets MCP2515 controller bitrate.
+// Configuration speeds are determined by Crystal Oscillator.
+// See MCP2515 datasheet Pg39 for more info.
+void CAN_MCP2515::bitRate(uint32_t bitrate)
+{
+  uint8_t CNF1, CNF2, CNF3;
+  if (bitrate == 10000)
+  {
+    CNF1 = 0x31; // Set BRP5, BRP4, and BRP0
+    CNF2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
+    CNF3 = 0x05; // Set PHSEG22 and PHSEG20
+  }
+  else if (bitrate == 20000)
+  {
+    CNF1 = 0x18;
+    CNF2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
+    CNF3 = 0x05; // Set PHSEG22 and PHSEG20
+  }
+  else if (bitrate == 50000)
+  {
+    CNF1 = 0x09;
+    CNF2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
+    CNF3 = 0x05; // Set PHSEG22 and PHSEG20
+  }
+  else if (bitrate == 100000)
+  {
+    CNF1 = 0x04;
+    CNF2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
+    CNF3 = 0x05; // Set PHSEG22 and PHSEG20
+  }
+  else if (bitrate == 125000)
+  {
+    CNF1 = 0x03;
+    CNF2 = 0xB8; // Set BTLMODE and PHSEG1<2:0>
+    CNF3 = 0x05; // Set PHSEG22 and PHSEG20
+  }
+  else if (bitrate == 250000)
+  {
+    CNF1 = 0x01; //CNF1 = 0x41; these are other configs for 500kb/s. need to confirm with current crystal osc @ 16mhz
+    CNF2 = 0xB8; //CNF2 = 0xF1;
+    CNF3 = 0x05; //CNF3 = 0x85;
+  }
+  else if (bitrate == 500000)
+  {
+    CNF1 = 0x00;
+    CNF2 = 0xB8; //CNF2 = 0xF0; these are other configs for 500kb/s. need to confirm with current crystal osc @ 16mhz
+    CNF3 = 0x05; //CNF3 = 0x86;
+  }
+  else if (bitrate == 1000000)
+  {
+    CNF1 = 0x00; //CNF1 = 0x80; these are other configs for 1Mb/s. need to confirm with current crystal osc @ 16mhz
+    CNF2 = 0xD0; //CNF2 = 0x90;
+    CNF3 = 0x82; //CNF3 = 0x02;
+  }
+  writeAddress(MCP2515_CNF1, CNF1);//Write config address 1
+  writeAddress(MCP2515_CNF2, CNF2);//Write config address 2
+  writeAddress(MCP2515_CNF3, CNF3);//Write config address 3
+}
+
+uint32_t CAN_MCP2515::readRate()
+{
+  uint8_t CNF1, CNF2, CNF3;
+  CNF1 = readAddress(MCP2515_CNF1);
+  CNF2 = readAddress(MCP2515_CNF2);
+  CNF3 = readAddress(MCP2515_CNF3);
+  if ((CNF2 == 0xB8) && (CNF3 == 0x05))
+  {
+    if (CNF1 == 0x31)
+    {
+      return 10000;
+    }
+    else if (CNF1 == 0x18)
+    {
+      return 20000;
+    }
+    else if (CNF1 == 0x09)
+    {
+      return 50000;
+    }
+    else if (CNF1 == 0x04)
+    {
+      return 100000;
+    }
+    else if (CNF1 == 0x03)
+    {
+      return 125000;
+    }
+    else if (CNF1 == 0x01)
+    {
+      return 250000;
+    }
+    else if (CNF1 == 0x00)
+    {
+      return 500000;
+    }
+  }
+  else if ((CNF1 == 0x00) && (CNF2 == 0xD0) && (CNF3 == 0x82))
+  {
+    return 1000000;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+//Turns RX filters/masks off. Will receive any message.
+void CAN_MCP2515::clearFilters()
+{
+  modifyAddress(MCP2515_RXB0CTRL, MCP2515_RXMn, MCP2515_RXMn);
+  modifyAddress(MCP2515_RXB1CTRL, MCP2515_RXMn, MCP2515_RXMn);
+}
+
+//Set Masks for filters
+void CAN_MCP2515::setMask(uint8_t mask, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
+{
+  setMode(MCP2515_MODE_CONFIG);
+  digitalWrite(CS, LOW);
+  SPI.transfer(mask);
+  SPI.transfer(b0);
+  SPI.transfer(b1);
+  SPI.transfer(b2);
+  SPI.transfer(b3);
+  digitalWrite(CS, HIGH);
+  setMode(MCP2515_MODE_NORMAL);
+}
+
+// Set Receive Filters. Will think of a more user friendly way to set these in the future but for right now it works....
+void CAN_MCP2515::setFilter(uint8_t filter, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
+{
+  setMode(MCP2515_MODE_CONFIG);
+  digitalWrite(CS, LOW);
+  SPI.transfer(filter);
+  SPI.transfer(b0);
+  SPI.transfer(b1);
+  SPI.transfer(b2);
+  SPI.transfer(b3);
+  digitalWrite(CS, HIGH);
+  setMode(MCP2515_MODE_NORMAL);
+}
+
+//At power up, MCP2515 buffers are not truly empty. There is random data in the registers
+//This loads buffers with zeros to prevent incorrect data to be sent.
+void CAN_MCP2515::clearRxBuffers()
+{
+  digitalWrite(CS, LOW);
+  SPI.transfer(MCP2515_SPI_WRITE);
+  SPI.transfer(MCP2515_RXB0SIDH);
+  for (uint8_t i = 0; i < 13; i++)
+  {
+    SPI.transfer(0x00);
+  }
+  digitalWrite(CS, HIGH);
+  digitalWrite(CS, LOW);
+  SPI.transfer (MCP2515_SPI_WRITE);
+  SPI.transfer (MCP2515_RXB1SIDH);
+  for (uint8_t i = 0; i < 13; i++)
+  {
+    SPI.transfer(0x00);
+  }
+  digitalWrite(CS, HIGH);
+}
+
+// This loads buffers with zeros to prevent incorrect data to be sent.
+// Note: If RTS is sent to a buffer that has all zeros it will still send a message with all zeros.
+void CAN_MCP2515::clearTxBuffers()
+{
+  digitalWrite(CS, LOW);
+  SPI.transfer (MCP2515_SPI_WRITE);
+  SPI.transfer (MCP2515_TXB0SIDH);
+  for (uint8_t i = 0; i < 13; i++)
+  {
+    SPI.transfer(0x00);
+  }
+  digitalWrite(CS, HIGH);
+  digitalWrite(CS, LOW);
+  SPI.transfer (MCP2515_SPI_WRITE);
+  SPI.transfer (MCP2515_TXB1SIDH);
+  for (uint8_t i = 0; i < 13; i++)
+  {
+    SPI.transfer(0x00);
+  }
+  digitalWrite(CS, HIGH);
+  digitalWrite(CS, LOW);
+  SPI.transfer (MCP2515_SPI_WRITE);
+  SPI.transfer (MCP2515_TXB2SIDH);
+  for (uint8_t i = 0; i < 13; i++)
+  {
+    SPI.transfer(0x00);
+  }
+  digitalWrite(CS, HIGH);
+}
+
 //Enable hardware Request to send pins. It allows messages to be send by driving RTS pins low.
 //These are not to be confused with RTS commands. These are the actual MCP2515 hardware pins
 void CAN_MCP2515::enableRTSPins()
 {
-  // (1 << MCP2515_B0RTSM) | (1 << MCP2515_B1RTSM) | (1 << MCP2515_B2RTSM) = 0x07
-  writeAddress(MCP2515_TXRTSCTRL, 0x07);
+  // According to section 10.1, TXRTSCTRL is only modifiable in Configuration Mode
+  setMode(MCP2515_MODE_CONFIG);
+  writeAddress(MCP2515_TXRTSCTRL, MCP2515_BnRTSM); // enable TXnRTS pins
+  setMode(MCP2515_MODE_NORMAL);
 }
 
 // Enable interrupts. The CANINTF register contains the corresponding interrupt flag bit for
