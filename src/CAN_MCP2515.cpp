@@ -417,21 +417,113 @@ void CAN_MCP2515::bitRate(uint32_t bitrate)
   }
   else if (bitrate == 250000)
   {
-    CNF1 = 0x01; //CNF1 = 0x41; these are other configs for 500kb/s. need to confirm with current crystal osc @ 16mhz
-    CNF2 = 0xB8; //CNF2 = 0xF1;
-    CNF3 = 0x05; //CNF3 = 0x85;
+    CNF1 = 0x01;
+    CNF2 = 0xB8;
+    CNF3 = 0x05;
   }
   else if (bitrate == 500000)
   {
     CNF1 = 0x00;
-    CNF2 = 0xB8; //CNF2 = 0xF0; these are other configs for 500kb/s. need to confirm with current crystal osc @ 16mhz
-    CNF3 = 0x05; //CNF3 = 0x86;
+    CNF2 = 0xB8;
+    CNF3 = 0x05;
   }
   else if (bitrate == 1000000)
   {
-    CNF1 = 0x00; //CNF1 = 0x80; these are other configs for 1Mb/s. need to confirm with current crystal osc @ 16mhz
-    CNF2 = 0xD0; //CNF2 = 0x90;
-    CNF3 = 0x82; //CNF3 = 0x02;
+    CNF1 = 0x00;
+    CNF2 = 0xD0;
+    CNF3 = 0x82;
+  }
+  writeAddress(MCP2515_CNF1, CNF1);//Write config address 1
+  writeAddress(MCP2515_CNF2, CNF2);//Write config address 2
+  writeAddress(MCP2515_CNF3, CNF3);//Write config address 3
+}
+
+//Sets MCP2515 controller bitrate.
+// Configuration speeds are determined by 16 MHz Crystal Oscillator.
+// https://github.com/coryjfowler/MCP2515_lib/blob/master/mcp_can_dfs.h
+// Baudrates 5k, 10k, 20k, 50k, 100k, 125k, 250k, 500k, & 1000k are confirmed
+// to work using a Peak-System PCAN-USB dongle as a reference.
+void CAN_MCP2515::bitrate16MHz(uint32_t bitrate)
+{
+  uint8_t CNF1, CNF2, CNF3;
+
+  if (bitrate == 5000)
+  {
+    CNF1 = 0x3F;
+    CNF2 = 0xFF;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 10000)
+  {
+    CNF1 = 0x1F;
+    CNF2 = 0xFF;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 20000)
+  {
+    CNF1 = 0x0F;
+    CNF2 = 0xFF;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 31025)
+  {
+    CNF1 = 0x0F;
+    CNF2 = 0xF1;
+    CNF3 = 0x85;
+  }
+  else if (bitrate == 40000)
+  {
+    CNF1 = 0x07;
+    CNF2 = 0xFF;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 50000)
+  {
+    CNF1 = 0x07;
+    CNF2 = 0xFA;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 80000)
+  {
+    CNF1 = 0x03;
+    CNF2 = 0xFF;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 100000)
+  {
+    CNF1 = 0x03;
+    CNF2 = 0xFA;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 125000)
+  {
+    CNF1 = 0x03;
+    CNF2 = 0xF0;
+    CNF3 = 0x86;
+  }
+  else if (bitrate == 200000)
+  {
+    CNF1 = 0x01;
+    CNF2 = 0xFA;
+    CNF3 = 0x87;
+  }
+  else if (bitrate == 250000)
+  {
+    CNF1 = 0x41;
+    CNF2 = 0xF1;
+    CNF3 = 0x85;
+  }
+  else if (bitrate == 500000)
+  {
+    CNF1 = 0x00;
+    CNF2 = 0xF0;
+    CNF3 = 0x86;
+  }
+  else if (bitrate == 1000000)
+  {
+    CNF1 = 0x00;
+    CNF2 = 0xD0;
+    CNF3 = 0x82;
   }
   writeAddress(MCP2515_CNF1, CNF1);//Write config address 1
   writeAddress(MCP2515_CNF2, CNF2);//Write config address 2

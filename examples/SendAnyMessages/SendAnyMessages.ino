@@ -23,6 +23,7 @@
 #elif defined(ARDUINO_ARCH_SAM)
 #include <variant.h>
 #include "CAN_SAM3X8E.h"
+#elif defined(__MK20DX256__) // Teensy 3.1
 #else
 #error “This library only supports boards with an AVR or SAM processor.”
 #endif

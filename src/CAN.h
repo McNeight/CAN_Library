@@ -66,11 +66,15 @@ DATE		VER		WHO			WHAT
 #define CAN_BPS_800K                   800000
 #define CAN_BPS_500K                   500000
 #define CAN_BPS_250K                   250000
+#define CAN_BPS_200K                   200000
 #define CAN_BPS_125K                   125000
 #define CAN_BPS_100K                   100000
 #define CAN_BPS_83K                    83333  // According to ARINC 825, this is a thing
+#define CAN_BPS_80K                    80000
 #define CAN_BPS_50K                    50000
+#define CAN_BPS_40K                    40000
 #define CAN_BPS_33333                  33333
+#define CAN_BPS_31K25                  31250
 #define CAN_BPS_25K                    25000
 #define CAN_BPS_20K                    20000
 #define CAN_BPS_10K                    10000
@@ -87,6 +91,22 @@ typedef struct
   uint8_t length : 4;    // Data Length
   uint8_t data[8]; 			 // Message data
 } CAN_FRAME;
+
+typedef struct CAN_message_t {
+  uint32_t id; // can identifier
+  uint8_t ext; // identifier is extended
+  uint8_t len; // length of data
+  uint16_t timeout; // milliseconds, zero will disable waiting
+  uint8_t buf[8];
+} CAN_message_t;
+
+typedef struct CAN_filter_t {
+  uint8_t rtr;
+  uint8_t ext;
+  uint32_t id;
+  uint8_t data[2];
+} CAN_filter_t;
+
 
 class CANClass // Can't inherit from Stream
 {
