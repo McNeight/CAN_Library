@@ -120,9 +120,9 @@ class CAN_SAM3X8E : public CANClass
     void begin (uint32_t bitrate, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
     void end();
     uint8_t available();
-    CAN_FRAME read();
+    CAN_Frame read();
     void flush();
-    uint8_t write(CAN_FRAME&);
+    uint8_t write(CAN_Frame&);
 
     void interruptHandler();
 
@@ -135,8 +135,8 @@ class CAN_SAM3X8E : public CANClass
 
     int numTXBoxes; //There are 8 mailboxes, anything not TX will be set RX
 
-    volatile CAN_FRAME rx_frame_buff[SAM3X8E_SIZE_RX_BUFFER];
-    volatile CAN_FRAME tx_frame_buff[SAM3X8E_SIZE_TX_BUFFER];
+    volatile CAN_Frame rx_frame_buff[SAM3X8E_SIZE_RX_BUFFER];
+    volatile CAN_Frame tx_frame_buff[SAM3X8E_SIZE_TX_BUFFER];
 
     volatile uint8_t rx_buffer_head, rx_buffer_tail;
     volatile uint8_t tx_buffer_head, tx_buffer_tail;
@@ -203,7 +203,7 @@ class CAN_SAM3X8E : public CANClass
     void mailbox_send_transfer_cmd(uint8_t uc_index);
     void mailbox_send_abort_cmd(uint8_t uc_index);
     void mailbox_init(uint8_t uc_index);
-    uint32_t mailbox_read(uint8_t uc_index, volatile CAN_FRAME *rxframe);
+    uint32_t mailbox_read(uint8_t uc_index, volatile CAN_Frame *rxframe);
     uint32_t mailbox_tx_frame(uint8_t uc_index);
     void mailbox_set_id(uint8_t uc_index, uint32_t id, bool extended);
     void mailbox_set_priority(uint8_t uc_index, uint8_t pri);

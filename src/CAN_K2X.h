@@ -2,33 +2,15 @@
 // a simple Arduino Teensy3.1 CAN driver
 // by teachop
 //
+
+#if defined(__MK20DX256__) // Teensy 3.1
+
 #ifndef _CAN_K2X_H_
 #define _CAN_K2X_H_
 
 #include <Arduino.h>
 #include "CAN.h"
 #include <stdint.h>
-
-// -------------------------------------------------------------
-class CAN_K2X : class CANClass
-  {
-    private:
-      struct CAN_filter_t defaultMask;
-
-    public:
-      CAN_K2X(uint32_t baud = 125000);
-      void begin(const CAN_filter_t &mask);
-      inline void begin()
-      {
-        begin(defaultMask);
-      }
-      void setFilter(const CAN_filter_t &filter, uint8_t n);
-      void end(void);
-      int available(void);
-      int write(const CAN_message_t &msg);
-      int read(CAN_message_t &msg);
-
-  };
 
 /* Common bit definition */
 #define BIT0             (1L)
@@ -1164,4 +1146,28 @@ typedef volatile uint32_t vuint32_t;
 #define FLEXCAN_ERRSR_FANCEIF_MASK	(0x00040000)
 #define FLEXCAN_ERRSR_HANCEIF_MASK	(0x00080000)
 
+// -------------------------------------------------------------
+class CAN_K2X : public CANClass
+{
+  public:
+    CAN_K2X();
+    void begin(uint32_t bitrate);
+    void end(void);
+    uint8_t available(void);
+    CAN_Frame read();
+    void flush();
+    uint8_t write(const CAN_Frame &msg);
+    // inline void begin()
+    // {
+    // begin(defaultMask);
+    // }
+
+  private:
+    struct CAN_Filter defaultMask;
+    void setFilter(const CAN_Filter &filter, uint8_t n);
+
+};
+
 #endif // _CAN_K2X_H_
+
+#endif // defined(__MK20DX256__) // Teensy 3.1

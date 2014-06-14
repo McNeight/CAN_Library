@@ -168,13 +168,13 @@ class CAN_AT90CAN : public CANClass
     // check if message has been received on any of the buffers
     uint8_t available();
     //Receive and display CAN message and allows use of the message structure for easier message handling
-    CAN_FRAME read();
+    CAN_Frame read();
     // Receive and display any message (J1939, CANopen, CAN)
     void read(uint32_t *ID, uint8_t *length_out, uint8_t *data_out);
 
     void flush();
 
-    uint8_t write(CAN_FRAME&);
+    uint8_t write(CAN_Frame&);
     // Load and send message. No RTS needed.
     uint8_t write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t *data);
 

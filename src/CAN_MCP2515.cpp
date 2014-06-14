@@ -91,7 +91,7 @@ void CAN_MCP2515::begin(uint32_t bitrate, uint8_t mode)
   clearFilters();
   // enable Transmit Buffer Empty Interrupt Enable bits
   //enableInterrupts(MCP2515_TXnIE, MCP2515_TXnIE);
-  bitRate(bitrate); //Set CAN bit rate
+  setBitrate(bitrate); //Set CAN bit rate
   setMode(mode);    //Set CAN mode
 }
 
@@ -113,9 +113,9 @@ uint8_t CAN_MCP2515::available()
 
 // Receive and display CAN message.
 // This allows use of the message structure for easier message handling.
-CAN_FRAME CAN_MCP2515::read()
+CAN_Frame CAN_MCP2515::read()
 {
-  CAN_FRAME message;
+  CAN_Frame message;
   uint8_t buffer, msgStatus;
   uint8_t RXBnSIDH, RXBnSIDL, RXBnEID8, RXBnEID0, RXBnDLC;
 
@@ -150,21 +150,32 @@ CAN_FRAME CAN_MCP2515::read()
   }
   digitalWrite(CS, HIGH);
 
-  message.id = 0; // Make sure this is zeroed out
   message.extended = bitRead(RXBnSIDL, MCP2515_IDE);
   // check to see if this is an Extended ID Msg.
   if (message.extended == CAN_EXTENDED_FRAME)
   {
-    message.id |= (RXBnSIDH << 21);                      // ID<28:21> = SIDH<7:0>
-    message.id |= ((RXBnSIDL & MCP2515_SIDL_SID) << 13); // ID<20:18> = SIDL<7:5>
-    message.id |= ((RXBnSIDL & MCP2515_SIDL_EID) << 16); // ID<17:16> = SIDL<1:0>
-    message.id |= (RXBnEID8 << 8);                       // ID<15:8>  = EID8<7:0>
-    message.id |= (RXBnEID0 << 0);                       // ID<7:0>   = EID0<7:0>
+    // Serial.println(message.id, HEX);
+    // Serial.print(RXBnSIDH, HEX);
+    // Serial.print(RXBnSIDL, HEX);
+    // Serial.print(RXBnEID8, HEX);
+    // Serial.println(RXBnEID0, HEX);
+    // If you don't cast to a larger int _before_ assignment, then
+    // sign extension _WILL_ bite you!!!
+    // https://en.wikipedia.org/wiki/Sign_extension
+    message.id  = ((uint32_t)RXBnSIDH << 21);            // ID<28:21> = SIDH<7:0>
+    message.id |= ((uint32_t)(RXBnSIDL & MCP2515_SIDL_SID) << 13); // ID<20:18> = SIDL<7:5>
+    message.id |= ((uint32_t)(RXBnSIDL & MCP2515_SIDL_EID) << 16); // ID<17:16> = SIDL<1:0>
+    //Serial.println(message.id, HEX);
+    message.id |= ((uint32_t)RXBnEID8 << 8);             // ID<15:8>  = EID8<7:0>
+    //Serial.println(message.id, HEX);
+    message.id |= ((uint32_t)RXBnEID0 << 0);             // ID<7:0>   = EID0<7:0>
+    //Serial.println(message.id, HEX);
     message.rtr = bitRead(RXBnDLC, MCP2515_RTR);
+    //Serial.println(message.id, HEX);
   }
   else if (message.extended == CAN_STANDARD_FRAME)
   {
-    message.id |= (RXBnSIDH << 3);                       // ID<10:3> = SIDH<7:0>
+    message.id  = (RXBnSIDH << 3);                       // ID<10:3> = SIDH<7:0>
     message.id |= ((RXBnSIDL & MCP2515_SIDL_SID) >> 5);  // ID<2:0>  = SIDL<7:5>
     message.rtr = bitRead(RXBnSIDL, MCP2515_SRR);
   }
@@ -179,7 +190,7 @@ CAN_FRAME CAN_MCP2515::read()
 // No message struct is used here.
 void CAN_MCP2515::read(uint32_t * ID, uint8_t * length_out, uint8_t * data_out)
 {
-  CAN_FRAME message_to_be_parsed;
+  CAN_Frame message_to_be_parsed;
   message_to_be_parsed = read();
   (*ID) = message_to_be_parsed.id;
   (*length_out) = message_to_be_parsed.length;
@@ -192,7 +203,7 @@ void CAN_MCP2515::flush()
   clearTxBuffers();
 }
 
-uint8_t CAN_MCP2515::write(CAN_FRAME & message)
+uint8_t CAN_MCP2515::write(const CAN_Frame & message)
 {
   uint8_t TXBnSIDH, TXBnSIDL, TXBnEID8, TXBnEID0, TXBnDLC, msgStatus, loadBuffer, sendBuffer;
   msgStatus = readStatus();
@@ -268,7 +279,7 @@ uint8_t CAN_MCP2515::write(CAN_FRAME & message)
 // Function to load and send any message. (J1939, CANopen, CAN). It assumes user knows what the ID is supposed to be
 uint8_t CAN_MCP2515::write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t * data) // changed from send() to write()
 {
-  CAN_FRAME message_to_be_sent;
+  CAN_Frame message_to_be_sent;
   message_to_be_sent.id = ID;
   message_to_be_sent.length = length;
   message_to_be_sent.extended = frameType;
@@ -374,7 +385,7 @@ void CAN_MCP2515::setMode(uint8_t mode)
 }
 
 // Function to read mode back
-uint8_t CAN_MCP2515::readMode()
+uint8_t CAN_MCP2515::getMode()
 {
   return (readAddress(MCP2515_CANSTAT) & MCP2515_REQOPn);
 }
@@ -382,7 +393,7 @@ uint8_t CAN_MCP2515::readMode()
 //Sets MCP2515 controller bitrate.
 // Configuration speeds are determined by Crystal Oscillator.
 // See MCP2515 datasheet Pg39 for more info.
-void CAN_MCP2515::bitRate(uint32_t bitrate)
+void CAN_MCP2515::setBitrate(uint32_t bitrate)
 {
   uint8_t CNF1, CNF2, CNF3;
   if (bitrate == 10000)
@@ -443,7 +454,7 @@ void CAN_MCP2515::bitRate(uint32_t bitrate)
 // https://github.com/coryjfowler/MCP2515_lib/blob/master/mcp_can_dfs.h
 // Baudrates 5k, 10k, 20k, 50k, 100k, 125k, 250k, 500k, & 1000k are confirmed
 // to work using a Peak-System PCAN-USB dongle as a reference.
-void CAN_MCP2515::bitrate16MHz(uint32_t bitrate)
+void CAN_MCP2515::setBitrate16MHz(uint32_t bitrate)
 {
   uint8_t CNF1, CNF2, CNF3;
 
@@ -530,7 +541,7 @@ void CAN_MCP2515::bitrate16MHz(uint32_t bitrate)
   writeAddress(MCP2515_CNF3, CNF3);//Write config address 3
 }
 
-uint32_t CAN_MCP2515::readRate()
+uint32_t CAN_MCP2515::getBitrate()
 {
   uint8_t CNF1, CNF2, CNF3;
   CNF1 = readAddress(MCP2515_CNF1);

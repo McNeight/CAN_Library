@@ -212,9 +212,9 @@ uint8_t CAN_SAM3X8E::available()
 }
 
 
-CAN_FRAME CAN_SAM3X8E::read()
+CAN_Frame CAN_SAM3X8E::read()
 {
-  CAN_FRAME buffer;
+  CAN_Frame buffer;
   if (rx_buffer_head == rx_buffer_tail)
   {
     buffer.valid = 0;
@@ -247,7 +247,7 @@ TX mailbox that's open or queues the frame for sending later via interrupts.
 This vastly simplifies the sending of frames - It does, however, assume
 that you're going to use interrupt driven transmission - It forces it really.
 */
-uint8_t CAN_SAM3X8E::write(CAN_FRAME& txFrame)
+uint8_t CAN_SAM3X8E::write(CAN_Frame& txFrame)
 {
   for (int i = 0; i < 8; i++)
   {
@@ -846,7 +846,7 @@ void CAN_SAM3X8E::reset_all_mailbox()
  * \retval Different CAN mailbox transfer status.
  *
  */
-uint32_t CAN_SAM3X8E::mailbox_read(uint8_t uc_index, volatile CAN_FRAME *rxframe)
+uint32_t CAN_SAM3X8E::mailbox_read(uint8_t uc_index, volatile CAN_Frame *rxframe)
 {
   uint32_t ul_status;
   uint32_t ul_retval;

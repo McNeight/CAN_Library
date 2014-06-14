@@ -329,11 +329,11 @@ class CAN_SJA1000 : public CANClass
     CAN_SJA1000(byte CS_Pin);// SPI CS is selectable through sketch. Allows multiple CAN channels.
     void begin (byte mode, int CANspeed);// Initializes CAN communications. Note it also starts SPI communications
     void begin (int CANspeed);// Initializes CAN communications into Normal mode. Note it also starts SPI communications
-    void bitRate(int CANspeed);//sets up CAN bit rate
+    void setBitrate(int CANspeed);//sets up CAN bit rate
     void setMode(byte mode) ;//puts CAN controller in one of five modes
     void reset(); //CAN software reset. Also puts MCP2515 into config mode
-    byte readMode(); // reads CAN mode
-    unsigned short readRate(); // reads CANspeed
+    byte getMode(); // reads CAN mode
+    unsigned short getBitrate(); // reads CANspeed
 
     void writeAddress(byte address, byte value);// writes MCP2515 register addresses
     byte readAddress(byte address); //reads MCP2515 registers

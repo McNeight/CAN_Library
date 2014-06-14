@@ -2,6 +2,9 @@
 // a simple Arduino Teensy3.1 CAN driver
 // by teachop
 //
+
+#if defined(__MK20DX256__) // Teensy 3.1
+
 #include "CAN_K2X.h"
 
 static const int txb = 8; // with default settings, all buffers before this are consumed by the FIFO
@@ -9,7 +12,7 @@ static const int txBuffers = 8;
 static const int rxb = 0;
 
 // -------------------------------------------------------------
-CAN_K2X::CAN_K2X(uint32_t baud)
+CAN_K2X::CAN_K2X()
 {
   // set up the pins, 3=PTA12=CAN0_TX, 4=PTA13=CAN0_RX
   CORE_PIN3_CONFIG = PORT_PCR_MUX(2);
@@ -36,28 +39,6 @@ CAN_K2X::CAN_K2X(uint32_t baud)
   //enable RX FIFO
   FLEXCAN0_MCR |= FLEXCAN_MCR_FEN;
 
-  // segment timings from freescale loopback test
-  if ( 250000 == baud )
-  {
-    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(1)
-                      | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(15));
-  }
-  else if ( 500000 == baud )
-  {
-    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(1)
-                      | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(7));
-  }
-  else if ( 1000000 == baud )
-  {
-    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(3) | FLEXCAN_CTRL_RJW(0)
-                      | FLEXCAN_CTRL_PSEG1(0) | FLEXCAN_CTRL_PSEG2(1) | FLEXCAN_CTRL_PRESDIV(5));
-  }
-  else     // 125000
-  {
-    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(2)
-                      | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(31));
-  }
-
   // Default mask is allow everything
   defaultMask.rtr = 0;
   defaultMask.ext = 0;
@@ -76,8 +57,30 @@ void CAN_K2X::end(void)
 
 
 // -------------------------------------------------------------
-void CAN_K2X::begin(const CAN_filter_t &mask)
+void CAN_K2X::begin(uint32_t bitrate)
 {
+  // segment timings from freescale loopback test
+  if ( 250000 == bitrate )
+  {
+    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(1)
+                      | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(15));
+  }
+  else if ( 500000 == bitrate )
+  {
+    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(1)
+                      | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(7));
+  }
+  else if ( 1000000 == bitrate )
+  {
+    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(3) | FLEXCAN_CTRL_RJW(0)
+                      | FLEXCAN_CTRL_PSEG1(0) | FLEXCAN_CTRL_PSEG2(1) | FLEXCAN_CTRL_PRESDIV(5));
+  }
+  else     // 125000
+  {
+    FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(2)
+                      | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(31));
+  }
+
   FLEXCAN0_RXMGMASK = 0;
 
   //enable reception of all messages that fit the mask
@@ -107,7 +110,7 @@ void CAN_K2X::begin(const CAN_filter_t &mask)
 
 
 // -------------------------------------------------------------
-void CAN_K2X::setFilter(const CAN_filter_t &filter, uint8_t n)
+void CAN_K2X::setFilter(const CAN_Filter &filter, uint8_t n)
 {
   if ( 8 > n )
   {
@@ -124,7 +127,7 @@ void CAN_K2X::setFilter(const CAN_filter_t &filter, uint8_t n)
 
 
 // -------------------------------------------------------------
-int CAN_K2X::available(void)
+uint8_t CAN_K2X::available(void)
 {
   //In FIFO mode, the following interrupt flag signals availability of a frame
   return (FLEXCAN0_IFLAG1 & FLEXCAN_IMASK1_BUF5M) ? 1 : 0;
@@ -132,9 +135,11 @@ int CAN_K2X::available(void)
 
 
 // -------------------------------------------------------------
-int CAN_K2X::read(CAN_message_t &msg)
+CAN_Frame CAN_K2X::read()
 {
   unsigned long int startMillis;
+  CAN_Frame msg;
+  msg.timeout = CAN_TIMEOUT_T3;
 
   startMillis = msg.timeout ? millis() : 0;
 
@@ -143,57 +148,67 @@ int CAN_K2X::read(CAN_message_t &msg)
     if ( !msg.timeout || (msg.timeout <= (millis() - startMillis)) )
     {
       // early EXIT nothing here
-      return 0;
+      msg.valid = false;
+      return msg;
     }
     yield();
   }
 
   // get identifier and dlc
-  msg.len = FLEXCAN_get_length(FLEXCAN0_MBn_CS(rxb));
-  msg.ext = (FLEXCAN0_MBn_CS(rxb) & FLEXCAN_MB_CS_IDE) ? 1 : 0;
+  msg.length = FLEXCAN_get_length(FLEXCAN0_MBn_CS(rxb));
+  msg.extended = (FLEXCAN0_MBn_CS(rxb) & FLEXCAN_MB_CS_IDE) ? 1 : 0;
   msg.id  = (FLEXCAN0_MBn_ID(rxb) & FLEXCAN_MB_ID_EXT_MASK);
-  if (!msg.ext)
+  if (!msg.extended)
   {
     msg.id >>= FLEXCAN_MB_ID_STD_BIT_NO;
   }
 
   // copy out message
   uint32_t dataIn = FLEXCAN0_MBn_WORD0(rxb);
-  msg.buf[3] = dataIn;
+  msg.data[3] = dataIn;
   dataIn >>= 8;
-  msg.buf[2] = dataIn;
+  msg.data[2] = dataIn;
   dataIn >>= 8;
-  msg.buf[1] = dataIn;
+  msg.data[1] = dataIn;
   dataIn >>= 8;
-  msg.buf[0] = dataIn;
-  if ( 4 < msg.len )
+  msg.data[0] = dataIn;
+  if ( 4 < msg.length )
   {
     dataIn = FLEXCAN0_MBn_WORD1(rxb);
-    msg.buf[7] = dataIn;
+    msg.data[7] = dataIn;
     dataIn >>= 8;
-    msg.buf[6] = dataIn;
+    msg.data[6] = dataIn;
     dataIn >>= 8;
-    msg.buf[5] = dataIn;
+    msg.data[5] = dataIn;
     dataIn >>= 8;
-    msg.buf[4] = dataIn;
+    msg.data[4] = dataIn;
   }
-  for ( int loop = msg.len; loop < 8; ++loop )
+  for ( int loop = msg.length; loop < 8; ++loop )
   {
-    msg.buf[loop] = 0;
+    msg.data[loop] = 0;
   }
 
   //notify FIFO that message has been read
   FLEXCAN0_IFLAG1 = FLEXCAN_IMASK1_BUF5M;
 
-  return 1;
+  msg.valid = true;
+  return msg;
 }
 
+void CAN_K2X::flush()
+{
+}
 
 // -------------------------------------------------------------
-int CAN_K2X::write(const CAN_message_t &msg)
+uint8_t CAN_K2X::write(const CAN_Frame &msg)
 {
   unsigned long int startMillis;
 
+  // Might as well check right off the bat
+  if (msg.valid == false)
+  {
+    return 0;
+  }
   startMillis = msg.timeout ? millis() : 0;
 
   // find an available buffer
@@ -217,7 +232,7 @@ int CAN_K2X::write(const CAN_message_t &msg)
       // blocking mode, only 1 txb used to guarantee frames in order
       if ( msg.timeout <= (millis() - startMillis) )
       {
-        return 0;// timed out
+        return 0; // timed out
       }
       yield();
     }
@@ -225,7 +240,7 @@ int CAN_K2X::write(const CAN_message_t &msg)
 
   // transmit the frame
   FLEXCAN0_MBn_CS(buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_INACTIVE);
-  if (msg.ext)
+  if (msg.extended)
   {
     FLEXCAN0_MBn_ID(buffer) = (msg.id & FLEXCAN_MB_ID_EXT_MASK);
   }
@@ -233,19 +248,20 @@ int CAN_K2X::write(const CAN_message_t &msg)
   {
     FLEXCAN0_MBn_ID(buffer) = FLEXCAN_MB_ID_IDSTD(msg.id);
   }
-  FLEXCAN0_MBn_WORD0(buffer) = (msg.buf[0] << 24) | (msg.buf[1] << 16) | (msg.buf[2] << 8) | msg.buf[3];
-  FLEXCAN0_MBn_WORD1(buffer) = (msg.buf[4] << 24) | (msg.buf[5] << 16) | (msg.buf[6] << 8) | msg.buf[7];
-  if (msg.ext)
+  FLEXCAN0_MBn_WORD0(buffer) = (msg.data[0] << 24) | (msg.data[1] << 16) | (msg.data[2] << 8) | msg.data[3];
+  FLEXCAN0_MBn_WORD1(buffer) = (msg.data[4] << 24) | (msg.data[5] << 16) | (msg.data[6] << 8) | msg.data[7];
+  if (msg.extended)
   {
     FLEXCAN0_MBn_CS(buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
-                              | FLEXCAN_MB_CS_LENGTH(msg.len) | FLEXCAN_MB_CS_SRR | FLEXCAN_MB_CS_IDE;
+                              | FLEXCAN_MB_CS_LENGTH(msg.length) | FLEXCAN_MB_CS_SRR | FLEXCAN_MB_CS_IDE;
   }
   else
   {
     FLEXCAN0_MBn_CS(buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
-                              | FLEXCAN_MB_CS_LENGTH(msg.len);
+                              | FLEXCAN_MB_CS_LENGTH(msg.length);
   }
 
   return 1;
 }
 
+#endif // defined(__MK20DX256__) // Teensy 3.1

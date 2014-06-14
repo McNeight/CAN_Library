@@ -426,7 +426,7 @@ class CAN_MCP2515 : public CANClass
     CAN_MCP2515(uint8_t CS_Pin);
 
     // Initializes CAN communications into Normal mode. Note it also starts SPI communications
-    void begin (uint32_t bitrate)
+    inline void begin (uint32_t bitrate)
     {
       begin(bitrate, MCP2515_MODE_NORMAL);
     };
@@ -437,13 +437,13 @@ class CAN_MCP2515 : public CANClass
     // check if message has been received on any of the buffers
     uint8_t available();
     //Receive and display CAN message and allows use of the message structure for easier message handling
-    CAN_FRAME read();
+    CAN_Frame read();
     // Receive and display any message (J1939, CANopen, CAN)
     void read(uint32_t *ID, uint8_t *length_out, uint8_t *data_out);
 
     void flush();
 
-    uint8_t write(CAN_FRAME&);
+    uint8_t write(const CAN_Frame&);
     // Load and send message. No RTS needed.
     uint8_t write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t *data);
 
@@ -452,15 +452,16 @@ class CAN_MCP2515 : public CANClass
     void _init();
 
     void reset(); //CAN software reset. Also puts MCP2515 into config mode
-    uint8_t readMode(); // reads CAN mode
-    uint32_t readRate(); // reads CANspeed
+    uint8_t getMode(); // reads CAN mode
+    uint32_t getBitrate(); // reads CANspeed
 
     void clearRxBuffers(); // clears all receive buffers
     void clearTxBuffers(); // clears all receive buffers
     void clearFilters();   // clears all filters and masks
 
     // Make setting bitrate and mode only part of the constructor
-    void bitRate(uint32_t bitrate);//sets up CAN bit rate
+    void setBitrate(uint32_t bitrate);//sets up CAN bit rate
+    void setBitrate16MHz(uint32_t bitrate);
     void setMode(uint8_t mode);//puts CAN controller in one of five modes
 
     void writeAddress(uint8_t address, uint8_t value);// writes MCP2515 register addresses

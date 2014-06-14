@@ -38,6 +38,6 @@ DATE		VER		WHO			WHAT
 
 #include "CAN.h"
 
-//CAN_FRAME& CANClass::operator=(const CAN_FRAME&)
+//CAN_Frame& CANClass::operator=(const CAN_Frame&)
 //{
 //}
