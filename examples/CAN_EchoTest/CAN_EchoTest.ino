@@ -11,7 +11,7 @@
 #include "CAN_MCP2515.h"
 #elif defined(ARDUINO_ARCH_SAM)
 #include <variant.h>
-#include "CAN_SAM3X8E.h"
+#include "CAN_SAM3X.h"
 #else
 #error “This library only supports boards with an AVR or SAM processor.”
 #endif
@@ -33,8 +33,8 @@ CAN_MCP2515 CANbus0(10); // Create CAN channel using pin 10 for SPI chip select
 CAN_MCP2515 CANbus1(9);  // Create CAN channel using pin 9 for SPI chip select
 #elif defined(ARDUINO_ARCH_SAM)
 // Can't use CAN0 or CAN1 as variable names, as they are defined in
-CAN_SAM3X8E CANbus0(0);  // Create CAN channel on CAN bus 0
-CAN_SAM3X8E CANbus1(1);  // Create CAN channel on CAN bus 1
+CAN_SAM3X CANbus0(0);  // Create CAN channel on CAN bus 0
+CAN_SAM3X CANbus1(1);  // Create CAN channel on CAN bus 1
 #else
 #error “This library only supports boards with an AVR or SAM processor.”
 #endif

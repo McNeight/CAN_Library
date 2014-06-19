@@ -118,8 +118,8 @@ typedef struct {
 
 #if defined(ARDUINO_ARCH_SAM)
 
-#ifndef _CAN_SAM3X8E_H_
-#define _CAN_SAM3X8E_H_
+#ifndef _CAN_SAM3X_H_
+#define _CAN_SAM3X_H_
 
 #include <Arduino.h>
 #include <variant.h>
@@ -127,49 +127,49 @@ typedef struct {
 #include "CAN.h"
 #include "sn65hvd234.h"
 
-#define SAM3X8E_CAN0_RS  61
-#define SAM3X8E_CAN0_EN  62
-#define SAM3X8E_CAN1_RS  63
-#define SAM3X8E_CAN1_EN  65
+#define SAM3X_CAN0_RS  61
+#define SAM3X_CAN0_EN  62
+#define SAM3X_CAN1_RS  63
+#define SAM3X_CAN1_EN  65
 
-#define SAM3X8E_MODE_NORMAL    0
-#define SAM3X8E_MODE_SLEEP     1 // Low-power mode
-//#define SAM3X8E_MODE_LOOPBACK  2
-#define SAM3X8E_MODE_LISTEN    3 // Auto-bitrate mode
-#define SAM3X8E_MODE_CONFIG    4 // disabled?
+#define SAM3X_MODE_NORMAL    0
+#define SAM3X_MODE_SLEEP     1 // Low-power mode
+//#define SAM3X_MODE_LOOPBACK  2
+#define SAM3X_MODE_LISTEN    3 // Auto-bitrate mode
+#define SAM3X_MODE_CONFIG    4 // disabled?
 
 /** Define the Mailbox mask for eight mailboxes. */
-#define SAM3X8E_GLOBAL_MAILBOX_MASK           0x000000ff
+#define SAM3X_GLOBAL_MAILBOX_MASK           0x000000ff
 
 /** Disable all interrupt mask */
-#define SAM3X8E_DISABLE_ALL_INTERRUPT_MASK 0xffffffff
+#define SAM3X_DISABLE_ALL_INTERRUPT_MASK 0xffffffff
 
 /** Define the mailbox mode. */
-#define SAM3X8E_MB_DISABLE_MODE           0
-#define SAM3X8E_MB_RX_MODE                1
-#define SAM3X8E_MB_RX_OVER_WR_MODE        2
-#define SAM3X8E_MB_TX_MODE                3
-#define SAM3X8E_MB_CONSUMER_MODE          4
-#define SAM3X8E_MB_PRODUCER_MODE          5
+#define SAM3X_MB_DISABLE_MODE           0
+#define SAM3X_MB_RX_MODE                1
+#define SAM3X_MB_RX_OVER_WR_MODE        2
+#define SAM3X_MB_TX_MODE                3
+#define SAM3X_MB_CONSUMER_MODE          4
+#define SAM3X_MB_PRODUCER_MODE          5
 
 /** Define CAN mailbox transfer status code. */
-#define SAM3X8E_MAILBOX_TRANSFER_OK       0     //! Read from or write into mailbox successfully.
-#define SAM3X8E_MAILBOX_NOT_READY         0x01  //! Receiver is empty or transmitter is busy.
-#define SAM3X8E_MAILBOX_RX_OVER           0x02  //! Message overwriting happens or there're messages lost in different receive modes.
-#define SAM3X8E_MAILBOX_RX_NEED_RD_AGAIN  0x04  //! Application needs to re-read the data register in Receive with Overwrite mode.
+#define SAM3X_MAILBOX_TRANSFER_OK       0     //! Read from or write into mailbox successfully.
+#define SAM3X_MAILBOX_NOT_READY         0x01  //! Receiver is empty or transmitter is busy.
+#define SAM3X_MAILBOX_RX_OVER           0x02  //! Message overwriting happens or there're messages lost in different receive modes.
+#define SAM3X_MAILBOX_RX_NEED_RD_AGAIN  0x04  //! Application needs to re-read the data register in Receive with Overwrite mode.
 
-#define SAM3X8E_SIZE_RX_BUFFER	32 //RX incoming ring buffer is this big
-#define SAM3X8E_SIZE_TX_BUFFER	16 //TX ring buffer is this big
+#define SAM3X_SIZE_RX_BUFFER	32 //RX incoming ring buffer is this big
+#define SAM3X_SIZE_TX_BUFFER	16 //TX ring buffer is this big
 
-class CAN_SAM3X8E : public CANClass
+class CAN_SAM3X : public CANClass
 {
   public:
     // Constructor
-    CAN_SAM3X8E();
-    CAN_SAM3X8E(uint8_t bus);
+    CAN_SAM3X();
+    CAN_SAM3X(uint8_t bus);
     void begin (uint32_t bitrate)
     {
-      begin(bitrate, SAM3X8E_MODE_NORMAL);
+      begin(bitrate, SAM3X_MODE_NORMAL);
     };// Initializes CAN communications into Normal mode. Note it also starts SPI communications
     void begin (uint32_t bitrate, uint8_t mode);// Initializes CAN communications. Note it also starts SPI communications
     void end();
@@ -189,8 +189,8 @@ class CAN_SAM3X8E : public CANClass
 
     int numTXBoxes; //There are 8 mailboxes, anything not TX will be set RX
 
-    volatile CAN_Frame rx_frame_buff[SAM3X8E_SIZE_RX_BUFFER];
-    volatile CAN_Frame tx_frame_buff[SAM3X8E_SIZE_TX_BUFFER];
+    volatile CAN_Frame rx_frame_buff[SAM3X_SIZE_RX_BUFFER];
+    volatile CAN_Frame tx_frame_buff[SAM3X_SIZE_TX_BUFFER];
 
     volatile uint8_t rx_buffer_head, rx_buffer_tail;
     volatile uint8_t tx_buffer_head, tx_buffer_tail;
@@ -270,10 +270,10 @@ class CAN_SAM3X8E : public CANClass
     void reset_all_mailbox();
 };
 
-extern CAN_SAM3X8E CAN;
+extern CAN_SAM3X CAN;
 // Worry about multiple buses later
-//extern CAN_SAM3X8E CANbus1;
+//extern CAN_SAM3X CANbus1;
 
-#endif // _CAN_SAM3X8E_H_
+#endif // _CAN_SAM3X_H_
 
 #endif // defined(ARDUINO_ARCH_SAM)

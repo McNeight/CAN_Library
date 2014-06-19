@@ -31,7 +31,7 @@
 #include <CAN_MCP2515.h>
 #elif defined(ARDUINO_ARCH_SAM)
 #include <variant.h>
-#include <CAN_SAM3X8E.h>
+#include <CAN_SAM3X.h>
 #else
 #error “This library only supports boards with an AVR or SAM processor.”
 #endif
@@ -51,7 +51,7 @@
 #if defined(ARDUINO_ARCH_AVR)
 CAN_MCP2515 CAN1(10); //Create CAN Channel
 #elif defined(ARDUINO_ARCH_SAM)
-CAN_SAM3X8E CAN1;
+CAN_SAM3X CAN1;
 CAN1.init(SystemCoreClock, CAN_BPS_1000K);
 #else
 #error “This library only supports boards with an AVR or SAM processor.”

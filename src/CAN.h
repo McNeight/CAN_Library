@@ -119,7 +119,7 @@ DATE		VER		WHO			WHAT
 #define CAN_CONTROLLER_MCP2515
 #endif // defined(ARDUINO_ARCH_AVR)
 #elif defined(ARDUINO_ARCH_SAM) // Arduino Due
-#define CAN_CONTROLLER_SAM3X8E
+#define CAN_CONTROLLER_SAM3X
 #elif defined(__MK20DX256__) // Teensy 3.1
 #define CAN_CONTROLLER_K2X
 #else

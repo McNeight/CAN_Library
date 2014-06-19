@@ -24,7 +24,7 @@
 #include <SPI.h>
 #include <CAN_MCP2515.h>
 #elif defined(ARDUINO_ARCH_SAM) // Arduino Due
-#include <CAN_SAM3X8E.h>
+#include <CAN_SAM3X.h>
 #elif defined(__MK20DX256__) // Teensy 3.1
 #include <CAN_K2X.h>
 #else
