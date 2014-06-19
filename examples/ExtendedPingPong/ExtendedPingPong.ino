@@ -28,7 +28,7 @@
 #elif defined(__MK20DX256__) // Teensy 3.1
 #include <CAN_K2X.h>
 #else
-#error “Your CAN controller is currently unsupported.”
+#error "Your CAN controller is currently unsupported."
 #endif
 
 // Define our CAN speed (bitrate).

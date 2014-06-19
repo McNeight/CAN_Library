@@ -3,11 +3,11 @@ using a consistent API, making CAN communications easier through Arduino.
  
 The idea behind this CAN library is to use a similar approach to Adafruit's
 Unified Sensor library (https://github.com/adafruit/Adafruit_Sensor) by
-standardizing CAN frame message structures, filters, masks, buffers, etc
+standardizing CAN function calls, frame structure, filters, masks, buffers, etc
 to be used with a wide variety of CAN controllers. This library currently
 supports the following controllers:
 
-* Microchip MCP2515 through the SPI interface
+* Microchip MCP2510 & MCP2515 through the SPI interface
   * Tested using various Arduino and Arduino-compatible controllers
 * Atmel SAM3X family of MCU
   * Tested using the SAM3X8E on the Arduino Due
