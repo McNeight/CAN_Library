@@ -1,6 +1,6 @@
 /* Copyright (C) 2014
 
-   Contributor:  Pedro Cevallos
+   Contributors:  Pedro Cevallos & Neil McNeight
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,25 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Acknowledgements:
-Fabian Greif for the initial MCP2515 library http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
-David Harding for his version of the MCP2515 library http://forum.arduino.cc/index.php/topic,8730.0.html
-Kyle Crockett CANduino library with 16Mhz oscillator. (http://code.google.com/p/canduino/)
+Fabian Greif for the initial MCP2515 library
+  http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
+  as well as his updates at https://github.com/dergraaf/avr-can-lib
+David Harding for his version of the MCP2515 library
+  http://forum.arduino.cc/index.php/topic,8730.0.html
+Kyle Crockett CANduino library with 16Mhz oscillator
+  http://code.google.com/p/canduino/
 Nuno Alves for the help on Extended ID messaging
-Stevenh for his work on library and all of the MCP2515 research/work http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+Stevenh for his work on library and all of the MCP research/work
+  http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+Collin Kidder (collin80) for his work on the Arduino Due CAN interface
+  https://github.com/collin80/due_can
+Daniel Kasamis (togglebit) both for his code at
+  https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN as well as his
+  DUE CANshield http://togglebit.net/product/arduino-due-can-shield/
+Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
+  https://github.com/coryjfowler/MCP2515_lib
+teachop for the FlexCAN library for the Teensy 3.1
+  https://github.com/teachop/FlexCAN_Library
 
 -------------------------------------------------------------------------------------------------------------
 Change Log
@@ -31,6 +45,7 @@ DATE		VER		WHO			WHAT
 02/05/14	0.3		PC		Added filter and mask controls
 05/01/14	0.4		PC		Cleaned up functions, variables and added message structures for J1939, CANopen and CAN.
 05/07/14	1.0		PC		Released Library to the public through GitHub
+06/18/14  1.9   NEM   Preparing a unified CAN library across three different CAN controllers
 -------------------------------------------------------------------------------------------------------------
 
 Features:
@@ -703,6 +718,8 @@ void CAN_MCP2515::setInterrupts(uint8_t mask, uint8_t writeVal)
   Bit 0: RX0IE: Receive Buffer 0 Full Interrupt Enable bit
   */
 }
+
+CAN_MCP2515 CAN(10); // Create CAN channel using pin 10 for SPI chip select
 
 #endif // defined(ARDUINO_ARCH_AVR)
 

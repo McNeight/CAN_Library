@@ -1,6 +1,6 @@
 /* Copyright (C) 2014
 
-    Contributor:  Pedro Cevallos
+   Contributors:  Pedro Cevallos & Neil McNeight
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,25 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Acknowledgements:
-Fabian Greif for the initial MCP2515 library http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
-David Harding for his version of the MCP2515 library http://forum.arduino.cc/index.php/topic,8730.0.html
-Kyle Crockett CANduino library with 16Mhz oscillator. (http://code.google.com/p/canduino/)
+Fabian Greif for the initial MCP2515 library
+  http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
+  as well as his updates at https://github.com/dergraaf/avr-can-lib
+David Harding for his version of the MCP2515 library
+  http://forum.arduino.cc/index.php/topic,8730.0.html
+Kyle Crockett CANduino library with 16Mhz oscillator
+  http://code.google.com/p/canduino/
 Nuno Alves for the help on Extended ID messaging
-Stevenh for his work on library and all of the MCP research/work http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+Stevenh for his work on library and all of the MCP research/work
+  http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+Collin Kidder (collin80) for his work on the Arduino Due CAN interface
+  https://github.com/collin80/due_can
+Daniel Kasamis (togglebit) both for his code at
+  https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN as well as his
+  DUE CANshield http://togglebit.net/product/arduino-due-can-shield/
+Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
+  https://github.com/coryjfowler/MCP2515_lib
+teachop for the FlexCAN library for the Teensy 3.1
+  https://github.com/teachop/FlexCAN_Library
 
 -------------------------------------------------------------------------------------------------------------
 Change Log
@@ -30,7 +44,8 @@ DATE		VER		WHO			WHAT
 09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
 05/01/14	0.4		PC		Cleaned up functions, variables and added message structures for J1939, CANopen and CAN.
-05/07/14	1.0		PC		Released library to public through GitHub
+05/07/14	1.0		PC		Released Library to the public through GitHub
+06/18/14  1.9   NEM   Preparing a unified CAN library across three different CAN controllers
 -------------------------------------------------------------------------------------------------------------
 
 */
@@ -90,11 +105,33 @@ DATE		VER		WHO			WHAT
 #define CAN_TIMEOUT_T3 1250
 #define CAN_TIMEOUT_T4 1050
 
+// It's time for #ifdef bingo!
+#if defined(ARDUINO_ARCH_AVR)
+#if defined(__AVR_AT90CAN32__) || \
+    defined(__AVR_AT90CAN64__) || \
+    defined(__AVR_AT90CAN128__)
+#define CAN_CONTROLLER_AT90CAN
+// Not sure if code will be different for these CPUs
+//#elif defined(__AVR_ATmega32C1__) || defined(__AVR_ATmega64C1__) || \
+//      defined(__AVR_ATmega16M1__) || defined(__AVR_ATmega32M1__) || \
+//      defined(__AVR_ATmega64M1__)
+#else
+#define CAN_CONTROLLER_MCP2515
+#endif // defined(ARDUINO_ARCH_AVR)
+#elif defined(ARDUINO_ARCH_SAM) // Arduino Due
+#define CAN_CONTROLLER_SAM3X8E
+#elif defined(__MK20DX256__) // Teensy 3.1
+#define CAN_CONTROLLER_K2X
+#else
+#error “Your CAN controller is currently unsupported.”
+#endif
 
+//
+//
 typedef struct __attribute__((__packed__))
 {
   uint32_t id : 29;       // if (ide == CAN_RECESSIVE) { extended ID }
-                          //   else { standard ID }
+  //   else { standard ID }
   uint8_t valid : 1;      // To avoid passing garbage frames around
   uint8_t rtr : 1;        // Remote Transmission Request Bit (RTR)
   uint8_t extended : 1;   // Identifier Extension Bit (IDE)
@@ -107,11 +144,53 @@ typedef struct __attribute__((__packed__))
 
 
 // From http://www.cse.dmu.ac.uk/~eg/tele/CanbusIDandMask.html
-// 
+//
+// CANBUS is a two-wire, half-duplex, bus based LAN system that is ‘collision
+// free’. Data is BROADCAST onto the bus -THERE IS NO SUCH THNG AS A POINT TO
+// POINT CONNECTION as with data LANs. All nodes receive all broadcast data
+// and decide whether or not that data is relevant.
+// A receiving node would examine the identifier to decide if it was relevant
+// (e.g. waiting for a frame with ID 00001567 which contains data to switch on
+// or off a motor). It could do this via software (using a C if or case
+// statement); in practice the Canbus interface contains firmware to carry out
+// this task using the acceptance filter and mask value to filter out unwanted
+// messages.
+//
+// The filter mask is used to determine which bits in the identifier of the
+// received frame are compared with the filter
+//
+//    If a mask bit is set to a zero, the corresponding ID bit will
+//    automatically be accepted, regardless of the value of the filter bit.
+//
+//    If a mask bit is set to a one, the corresponding ID bit will be compared
+//    with the value of the filter bit; if they match it is accepted otherwise
+//    the frame is rejected.
+//
+// Example 1. we wish to accept only frames with ID of 00001567 (hexadecimal values)
+//
+//    set filter to 00001567
+//
+//    set mask to 1FFFFFFF
+//
+// when a frame arrives its ID is compared with the filter and all bits must
+// match; any frame that does not match ID 00001567 is rejected
+//
+// Example 4. we wish to accept any frame
+//
+//    set filter to 0
+//
+//    set mask to 0
+//
+// all frames are accepted
+//
+//
+// In practice Canbus interfaces tends to have a number of filters and masks
+// so combinations of IDs can be accepted, e.g. a module that carries out a
+// number of different tasks.
 typedef struct __attribute__((__packed__))
 {
   uint32_t id : 29;       // if (ide == CAN_RECESSIVE) { extended ID }
-                          //   else { standard ID }
+  //   else { standard ID }
   uint8_t rtr : 1;        // Remote Transmission Request Bit (RTR)
   uint8_t extended : 1;   // Identifier Extension Bit (IDE)
   uint8_t data[2];        // Filter / Mask for message data
@@ -131,6 +210,9 @@ class CANClass // Can't inherit from Stream
     //CAN_Frame& operator=(const CAN_Frame&);
 };
 
+// Too many other libraries already define CAN.
 //extern CANClass CAN;
+//extern CANClass CANbus;
+// Unable to use extern on a base class
 
 #endif // _CAN_H_
