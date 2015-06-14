@@ -55,7 +55,7 @@ DATE		VER		WHO			WHAT
 */
 
 
-#if defined(ARDUINO_ARCH_AVR)
+#if defined(ARDUINO_ARCH_AVR) && !defined(__MK20DX256__)
 
 #ifndef _CAN_MCP2515_H_
 #define _CAN_MCP2515_H_

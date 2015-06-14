@@ -55,7 +55,7 @@ DATE		VER		WHO			WHAT
 */
 
 
-#if defined(ARDUINO_ARCH_AVR)
+#if defined(ARDUINO_ARCH_AVR) && !defined(__MK20DX256__)
 
 #include <Arduino.h>
 #include <SPI.h>

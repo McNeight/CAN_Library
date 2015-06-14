@@ -3,7 +3,7 @@
   Topic: Receive Messages using read(ID, length, data) function
   Authors: Pedro Cevallos & Neil McNeight
   Created: 05/07/14
-  Updated: 06/18/14
+  Updated: 06/14/15
 
   Example shows how to receive messages using CAN
   This example uses Serial Monitor to display received messages
@@ -17,19 +17,8 @@
 
  */
 
-#include <Arduino.h>
 #include <CAN.h>
-
-#if defined(ARDUINO_ARCH_AVR) // Arduino with SPI interface to MCP2515 chip
-#include <SPI.h>
-#include <CAN_MCP2515.h>
-#elif defined(ARDUINO_ARCH_SAM) // Arduino Due
-#include <CAN_SAM3X.h>
-#elif defined(__MK20DX256__) // Teensy 3.1
-#include <CAN_K2X.h>
-#else
-#error "Your CAN controller is currently unsupported."
-#endif
+#include <SPI.h> // required to resolve #define conflicts
 
 // Define our CAN speed (bitrate).
 #define bitrate CAN_BPS_500K

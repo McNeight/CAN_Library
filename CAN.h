@@ -199,7 +199,7 @@ class CANClass // Can't inherit from Stream
 // Unable to use extern on a base class
 
 // It's time for #ifdef bingo!
-#if defined(ARDUINO_ARCH_AVR) 
+#if defined(ARDUINO_ARCH_AVR) && !defined(__MK20DX256__)
 //
 #if defined(__AVR_AT90CAN32__) || \
     defined(__AVR_AT90CAN64__) || \

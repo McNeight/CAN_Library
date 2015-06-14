@@ -6,7 +6,7 @@
 
   Authors: Thibaut Viard, Wilfredo Molina, Collin Kidder, Pedro Cevallos & Neil McNeight
   Created: 06/01/14
-  Updated: 06/18/14
+  Updated: 06/14/15
 
   As per wiki information:
   "CAN bus is a message-based protocol, designed specifically for automotive
@@ -17,25 +17,15 @@
 
  */
 
-#include <Arduino.h>
 #include <CAN.h>
-
-#if defined(ARDUINO_ARCH_AVR) // Arduino with SPI interface to MCP2515 chip
-#include <SPI.h>
-#include <CAN_MCP2515.h>
-#elif defined(ARDUINO_ARCH_SAM) // Arduino Due
-#include <CAN_SAM3X.h>
-#elif defined(__MK20DX256__) // Teensy 3.1
-#include <CAN_K2X.h>
-#else
-#error "Your CAN controller is currently unsupported."
-#endif
+#include <SPI.h> // required to resolve #define conflicts
 
 // Define our CAN speed (bitrate).
 #define bitrate CAN_BPS_500K
 
 //Comment out for one node, and leave uncommented for the other node
 #define NODE1
+
 #ifdef NODE1
 #define NODETX_CAN_ID    0x15555555
 #define NODERX_CAN_ID    0x0AAAAAAA
