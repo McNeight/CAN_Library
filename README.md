@@ -1,5 +1,6 @@
 This library allows you to communicate with multiple types of CAN controllers
-using a consistent API, making CAN communications easier through Arduino.
+using a consistent API, making CAN communications across development platforms
+easier through Arduino.
  
 The idea behind this CAN library is to use a similar approach to Adafruit's
 Unified Sensor library (https://github.com/adafruit/Adafruit_Sensor) by
@@ -22,20 +23,29 @@ I can take credit in putting it together and releasing back to the public
 to make any variation as needed. This is a work in progress library with
 no current release.
 
-For the MCP2515 library release see CAN_MCP2515 branch on this repo 
-
+To start using this library, simply add the following two lines to your sketch:
 ```Arduino
-#include <Arduino.h>
 #include <CAN.h>
-
-#if defined(ARDUINO_ARCH_AVR) // Arduino with SPI interface to MCP2515 chip
-#include <SPI.h>
-#include <CAN_MCP2515.h>
-#elif defined(ARDUINO_ARCH_SAM) // Arduino Due
-#include <CAN_SAM3X.h>
-#elif defined(__MK20DX256__) // Teensy 3.1
-#include <CAN_K2X.h>
-#else
-#error “Your CAN controller is currently unsupported.”
-#endif
+#include <SPI.h> // required to resolve #define conflicts
 ```
+
+Acknowledgements:
+Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
+  http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
+  as well as his updates at https://github.com/dergraaf/avr-can-lib
+David Harding for his version of the MCP2515 library
+  http://forum.arduino.cc/index.php/topic,8730.0.html
+Kyle Crockett CANduino library with 16Mhz oscillator
+  http://code.google.com/p/canduino/
+Nuno Alves for the help on Extended ID messaging
+Stevenh for his work on library and all of the MCP research/work
+  http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+Collin Kidder (collin80) for his work on the Arduino Due CAN interface
+  https://github.com/collin80/due_can
+Daniel Kasamis (togglebit) both for his code at
+  https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN as well as his
+  DUE CANshield http://togglebit.net/product/arduino-due-can-shield/
+Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
+  https://github.com/coryjfowler/MCP2515_lib
+teachop for the FlexCAN library for the Teensy 3.1
+  https://github.com/teachop/FlexCAN_Library
