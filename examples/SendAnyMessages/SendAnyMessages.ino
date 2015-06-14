@@ -61,6 +61,7 @@ void extendedMessage()
 // Create a function to load and send a standard frame message
 void standardMessage()
 {
+  uint32_t timehack = millis();
   unsigned long ID = 0x555; // Random Standard Message ID
   byte length = 8; // Data length
   // counter in the first 4 bytes, timing in the last 4 bytes
