@@ -104,27 +104,69 @@ void CAN_K2X::end(void)
 }
 
 
+//Can find more timings at https://code.google.com/p/peninsula/source/browse/trunk/Kinetis512/kinetis-sc/src/projects/sci2can/can.c?r=16
+//search for "switch (baudrateKHz)" on that page
 // -------------------------------------------------------------
 void CAN_K2X::begin(uint32_t bitrate)
 {
   // segment timings from freescale loopback test
-  if ( 250000 == bitrate )
+  if ( 33333 == bitrate )
   {
+	  /*
+	                          ** 48M/120= 400k sclock, 12Tq
+	                          ** PROPSEG = 3, LOM = 0x0, LBUF = 0x0, TSYNC = 0x0, SAMP = 1
+	                                  ** RJW = 3, PSEG1 = 4, PSEG2 = 4,PRESDIV = 120
+	                          */
+		FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(2)
+						  | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(119));
+  }
+  else if ( 83333 == bitrate )
+  {
+	  /*
+	                           ** 48M/48= 1M sclock, 12Tq
+	                           ** PROPSEG = 3, LOM = 0x0, LBUF = 0x0, TSYNC = 0x0, SAMP = 1
+	                                   ** RJW = 3, PSEG1 = 4, PSEG2 = 4,PRESDIV = 48
+	                           */
+	FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(2)
+					  | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(47));
+  }
+  else if ( 250000 == bitrate )
+  {
+	  /*
+	                           ** 48M/16= 3M sclock, 12Tq
+	                           ** PROPSEG = 3, LOM = 0x0, LBUF = 0x0, TSYNC = 0x0, SAMP = 1
+	                                   ** RJW = 2, PSEG1 = 4, PSEG2 = 4, PRESDIV = 16
+	                           */
     FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(1)
                       | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(15));
   }
   else if ( 500000 == bitrate )
   {
+	  /*
+	                           ** 48M/8=6M sclock, 12Tq
+	                           ** PROPSEG = 3, LOM = 0x0, LBUF = 0x0, TSYNC = 0x0, SAMP = 1
+	                                   ** RJW = 2, PSEG1 = 4, PSEG2 = 4, PRESDIV = 6
+	                           */
     FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(1)
                       | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(7));
   }
   else if ( 1000000 == bitrate )
   {
+	  /*
+	                                   ** 48M/6=8M sclock
+	                                   ** PROPSEG = 4, LOM = 0x0, LBUF = 0x0, TSYNC = 0x0, SAMP = 1
+	                                   ** RJW = 1, PSEG1 = 1, PSEG2 = 2, PRESCALER = 6
+	                               */
     FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(3) | FLEXCAN_CTRL_RJW(0)
                       | FLEXCAN_CTRL_PSEG1(0) | FLEXCAN_CTRL_PSEG2(1) | FLEXCAN_CTRL_PRESDIV(5));
   }
   else     // 125000
   {
+	  /*
+	                         ** 48M/32= 1.5M sclock, 12Tq
+	                         ** PROPSEG = 3, LOM = 0x0, LBUF = 0x0, TSYNC = 0x0, SAMP = 1
+	                                 ** RJW = 3, PSEG1 = 4, PSEG2 = 4, PRESDIV = 32
+	                         */
     FLEXCAN0_CTRL1 = (FLEXCAN_CTRL_PROPSEG(2) | FLEXCAN_CTRL_RJW(2)
                       | FLEXCAN_CTRL_PSEG1(3) | FLEXCAN_CTRL_PSEG2(3) | FLEXCAN_CTRL_PRESDIV(31));
   }
