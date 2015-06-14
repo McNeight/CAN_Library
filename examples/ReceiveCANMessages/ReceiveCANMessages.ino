@@ -57,6 +57,7 @@ void readMessage()
   {
     message = CAN.read(); //read message, it will follow the CAN structure of ID,RTR, legnth, data. Allows both Extended or Standard
 
+    Serial.print(millis());
     Serial.print(F(",0x"));
     Serial.print(message.id, HEX); //display message ID
     Serial.print(',');

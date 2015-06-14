@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Acknowledgements:
-Fabian Greif for the initial MCP2515 library
+Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
   http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
   as well as his updates at https://github.com/dergraaf/avr-can-lib
 David Harding for his version of the MCP2515 library
@@ -36,17 +36,21 @@ Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
 teachop for the FlexCAN library for the Teensy 3.1
   https://github.com/teachop/FlexCAN_Library
 
--------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 Change Log
 
 DATE		VER		WHO			WHAT
-07/07/13	0.1		PC		Modified and merge all MCP2515 libraries found. Stripped away most unused functions and corrected MCP2515 defs
-09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
+07/07/13  0.1   PC    Modified and merge all MCP2515 libraries found. Stripped
+                        away most unused functions and corrected MCP2515 defs
+09/12/13  0.2   PC    Added selectable CS SPI for CAN controller to use 1 IC
+                        to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
-05/01/14	0.4		PC		Cleaned up functions, variables and added message structures for J1939, CANopen and CAN.
+05/01/14  0.4   PC    Cleaned up functions, variables and added message
+                        structures for J1939, CANopen and CAN.
 05/07/14	1.0		PC		Released Library to the public through GitHub
-06/18/14  1.9   NEM   Preparing a unified CAN library across three different CAN controllers
--------------------------------------------------------------------------------------------------------------
+06/18/14  1.9   NEM   Preparing a unified CAN library across three different
+                        CAN controllers
+-------------------------------------------------------------------------------
 
 */
 
@@ -61,18 +65,18 @@ DATE		VER		WHO			WHAT
 #include <stdint.h>
 
 /* Common bit definition */
-#define BIT0             (1L)
-#define BIT1             (BIT0<<1)
-#define BIT2             (BIT0<<2)
-#define BIT3             (BIT0<<3)
-#define BIT4             (BIT0<<4)
-#define BIT5             (BIT0<<5)
-#define BIT6             (BIT0<<6)
-#define BIT7             (BIT0<<7)
-#define BIT8             (BIT0<<8)
-#define BIT9             (BIT0<<9)
-#define BIT10            (BIT0<<10)
-#define BIT11            (BIT0<<11)
+#define BIT0             (0x00000001L)
+#define BIT1             (0x00000002L)
+#define BIT2             (0x00000004L)
+#define BIT3             (0x00000008L)
+#define BIT4             (0x00000010L)
+#define BIT5             (0x00000020L)
+#define BIT6             (0x00000040L)
+#define BIT7             (0x00000080L)
+#define BIT8             (0x00000100L)
+#define BIT9             (0x00000200L)
+#define BIT10            (0x00000400L)
+#define BIT11            (0x00000800L)
 #define BIT12            (0x00001000L)
 #define BIT13            (0x00002000L)
 #define BIT14            (0x00004000L)

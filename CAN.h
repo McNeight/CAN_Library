@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Acknowledgements:
-Fabian Greif for the initial MCP2515 library
+Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
   http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
   as well as his updates at https://github.com/dergraaf/avr-can-lib
 David Harding for his version of the MCP2515 library
@@ -36,17 +36,21 @@ Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
 teachop for the FlexCAN library for the Teensy 3.1
   https://github.com/teachop/FlexCAN_Library
 
--------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 Change Log
 
 DATE		VER		WHO			WHAT
-07/07/13	0.1		PC		Modified and merge all MCP2515 libraries found. Stripped away most unused functions and corrected MCP2515 defs
-09/12/13	0.2		PC		Added selectable CS SPI for CAN controller to use 1 IC to control several mcp2515
+07/07/13  0.1   PC    Modified and merge all MCP2515 libraries found. Stripped
+                        away most unused functions and corrected MCP2515 defs
+09/12/13  0.2   PC    Added selectable CS SPI for CAN controller to use 1 IC
+                        to control several mcp2515
 02/05/14	0.3		PC		Added filter and mask controls
-05/01/14	0.4		PC		Cleaned up functions, variables and added message structures for J1939, CANopen and CAN.
+05/01/14  0.4   PC    Cleaned up functions, variables and added message
+                        structures for J1939, CANopen and CAN.
 05/07/14	1.0		PC		Released Library to the public through GitHub
-06/18/14  1.9   NEM   Preparing a unified CAN library across three different CAN controllers
--------------------------------------------------------------------------------------------------------------
+06/18/14  1.9   NEM   Preparing a unified CAN library across three different
+                        CAN controllers
+-------------------------------------------------------------------------------
 
 */
 
@@ -104,27 +108,6 @@ DATE		VER		WHO			WHAT
 #define CAN_TIMEOUT_T2 1250
 #define CAN_TIMEOUT_T3 1250
 #define CAN_TIMEOUT_T4 1050
-
-// It's time for #ifdef bingo!
-#if defined(ARDUINO_ARCH_AVR)
-#if defined(__AVR_AT90CAN32__) || \
-    defined(__AVR_AT90CAN64__) || \
-    defined(__AVR_AT90CAN128__)
-#define CAN_CONTROLLER_AT90CAN
-// Not sure if code will be different for these CPUs
-//#elif defined(__AVR_ATmega32C1__) || defined(__AVR_ATmega64C1__) || \
-//      defined(__AVR_ATmega16M1__) || defined(__AVR_ATmega32M1__) || \
-//      defined(__AVR_ATmega64M1__)
-#else
-#define CAN_CONTROLLER_MCP2515
-#endif // defined(ARDUINO_ARCH_AVR)
-#elif defined(ARDUINO_ARCH_SAM) // Arduino Due
-#define CAN_CONTROLLER_SAM3X
-#elif defined(__MK20DX256__) // Teensy 3.1
-#define CAN_CONTROLLER_K2X
-#else
-#error “Your CAN controller is currently unsupported.”
-#endif
 
 //
 //
@@ -214,5 +197,44 @@ class CANClass // Can't inherit from Stream
 //extern CANClass CAN;
 //extern CANClass CANbus;
 // Unable to use extern on a base class
+
+// It's time for #ifdef bingo!
+#if defined(ARDUINO_ARCH_AVR) 
+//
+#if defined(__AVR_AT90CAN32__) || \
+    defined(__AVR_AT90CAN64__) || \
+    defined(__AVR_AT90CAN128__)
+#define CAN_CONTROLLER_AT90CAN
+#include "CAN_AT90CAN.h"
+// Not sure if code will be different for these CPUs
+#elif defined(__AVR_ATmega32C1__) || \
+     defined(__AVR_ATmega64C1__) || \
+     defined(__AVR_ATmega16M1__) || \
+     defined(__AVR_ATmega32M1__) || \
+     defined(__AVR_ATmega64M1__)
+#error Are you sure these are supported?
+#else // Assume it's an AVR with SPI interface
+//#if defined(MCP2515)
+#define CAN_CONTROLLER_MCP2515 // SPI interface to MCP2515 chip
+#include <SPI.h>
+#include "CAN_MCP2515.h"
+//#elif defined(SJA1000) // SPI interface to SJA1000 chip
+//#define CAN_CONTROLLER_SJA1000
+//#include <SPI.h>
+//#include "CAN_SJA1000.h"
+//#else
+//#error "Your SPI CAN controller is currently unsupported."
+//#endif // MCP2515 / SJA1000
+#endif // AT90 / M1 / C1 / SPI
+
+#elif defined(ARDUINO_ARCH_SAM) || defined(__SAM3X8E__) // Arduino Due
+#define CAN_CONTROLLER_SAM3X
+#include "CAN_SAM3X.h"
+#elif defined(__MK20DX256__) // Teensy 3.1
+#define CAN_CONTROLLER_K2X
+#include "CAN_K2X.h"
+#else
+#error "Your CPU & CAN controller are currently unsupported."
+#endif // ARDUINO_ARCH_*
 
 #endif // _CAN_H_
