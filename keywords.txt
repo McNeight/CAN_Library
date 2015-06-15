@@ -1,71 +1,75 @@
-#######################################
+###########################################
 # Syntax Coloring Map For CAN_Library
-#######################################
+###########################################
 
-#######################################
-# Datatypes (KEYWORD1)
-#######################################
+###########################################
+# KEYWORD1 specifies classes and datatypes
+###########################################
 
-CANClass	KEYWORD1
-CAN_Frame	KEYWORD1
-CAN_Filter	KEYWORD1
+CANClass                KEYWORD1
+CAN_Frame               KEYWORD1
+CAN_Filter              KEYWORD1
+CAN                     KEYWORD1
+#CANbus                 KEYWORD1
+#CAN0                   KEYWORD1
+#CAN1                   KEYWORD1
+#CAN2                   KEYWORD1
 
-#######################################
-# Methods and Functions (KEYWORD2)
-#######################################
+###########################################
+# KEYWORD2 specifies methods and functions
+###########################################
 
-begin	KEYWORD2
-end	KEYWORD2
-available	KEYWORD2
-read	KEYWORD2
-flush	KEYWORD2
-write	KEYWORD2
+begin                   KEYWORD2
+end                     KEYWORD2
+available               KEYWORD2
+read                    KEYWORD2
+flush                   KEYWORD2
+write                   KEYWORD2
 
-#######################################
-# Instances (KEYWORD2)
-#######################################
+###########################################
+# KEYWORD3 specifies structures
+###########################################
 
-CAN	KEYWORD2
-#CANbus KEYWORD2
-#CAN0 KEYWORD2
-#CAN1	KEYWORD2
-#CAN2	KEYWORD2
+###########################################
+# LITERAL1 specifies constants
+###########################################
 
-#######################################
-# Constants (LITERAL1)
-#######################################
+CAN_DOMINANT            LITERAL1
+CAN_RECESSIVE           LITERAL1
+CAN_STANDARD_FRAME      LITERAL1
+CAN_EXTENDED_FRAME      LITERAL1
+CAN_STANDARD_ID_MASK    LITERAL1
+CAN_EXTENDED_ID_MASK    LITERAL1
+CAN_BPS_1M              LITERAL1
+CAN_BPS_1000K           LITERAL1
+CAN_BPS_800K            LITERAL1
+CAN_BPS_500K            LITERAL1
+CAN_BPS_250K            LITERAL1
+CAN_BPS_200K            LITERAL1
+CAN_BPS_125K            LITERAL1
+CAN_BPS_100K            LITERAL1
+CAN_BPS_83K             LITERAL1
+CAN_BPS_80K             LITERAL1
+CAN_BPS_50K             LITERAL1
+CAN_BPS_40K             LITERAL1
+CAN_BPS_33333           LITERAL1
+CAN_BPS_31K25           LITERAL1
+CAN_BPS_25K             LITERAL1
+CAN_BPS_20K             LITERAL1
+CAN_BPS_10K             LITERAL1
+CAN_BPS_5K              LITERAL1
+CAN_TIMEOUT_TR          LITERAL1
+CAN_TIMEOUT_TH          LITERAL1
+CAN_TIMEOUT_T1          LITERAL1
+CAN_TIMEOUT_T2          LITERAL1
+CAN_TIMEOUT_T3          LITERAL1
+CAN_TIMEOUT_T4          LITERAL1
+CAN_CONTROLLER_AT90CAN  LITERAL1
+CAN_CONTROLLER_K2X      LITERAL1
+CAN_CONTROLLER_MCP2515  LITERAL1
+CAN_CONTROLLER_SAM3X    LITERAL1
+CAN_CONTROLLER_SJA1000  LITERAL1
 
-CAN_DOMINANT	LITERAL1
-CAN_RECESSIVE	LITERAL1
-CAN_STANDARD_FRAME	LITERAL1
-CAN_EXTENDED_FRAME	LITERAL1
-CAN_STANDARD_ID_MASK	LITERAL1
-CAN_EXTENDED_ID_MASK	LITERAL1
-CAN_BPS_1M	LITERAL1
-CAN_BPS_1000K	LITERAL1
-CAN_BPS_800K	LITERAL1
-CAN_BPS_500K	LITERAL1
-CAN_BPS_250K	LITERAL1
-CAN_BPS_200K	LITERAL1
-CAN_BPS_125K	LITERAL1
-CAN_BPS_100K	LITERAL1
-CAN_BPS_83K	LITERAL1
-CAN_BPS_80K	LITERAL1
-CAN_BPS_50K	LITERAL1
-CAN_BPS_40K	LITERAL1
-CAN_BPS_33333	LITERAL1
-CAN_BPS_31K25	LITERAL1
-CAN_BPS_25K	LITERAL1
-CAN_BPS_20K	LITERAL1
-CAN_BPS_10K	LITERAL1
-CAN_BPS_5K	LITERAL1
-CAN_TIMEOUT_TR	LITERAL1
-CAN_TIMEOUT_TH	LITERAL1
-CAN_TIMEOUT_T1	LITERAL1
-CAN_TIMEOUT_T2	LITERAL1
-CAN_TIMEOUT_T3	LITERAL1
-CAN_TIMEOUT_T4	LITERAL1
-CAN_CONTROLLER_AT90CAN	LITERAL1
-CAN_CONTROLLER_MCP2515	LITERAL1
-CAN_CONTROLLER_SAM3X	LITERAL1
-CAN_CONTROLLER_K2X  LITERAL1
+###########################################
+# LITERAL2 specifies built-in variables
+###########################################

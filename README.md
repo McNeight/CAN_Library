@@ -30,22 +30,22 @@ To start using this library, simply add the following two lines to your sketch:
 ```
 
 Acknowledgements:
-Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
-  http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
-  as well as his updates at https://github.com/dergraaf/avr-can-lib
-David Harding for his version of the MCP2515 library
-  http://forum.arduino.cc/index.php/topic,8730.0.html
-Kyle Crockett CANduino library with 16Mhz oscillator
-  http://code.google.com/p/canduino/
-Nuno Alves for the help on Extended ID messaging
-Stevenh for his work on library and all of the MCP research/work
-  http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
-Collin Kidder (collin80) for his work on the Arduino Due CAN interface
-  https://github.com/collin80/due_can
-Daniel Kasamis (togglebit) both for his code at
+* Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
+  * http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
+    as well as his updates at https://github.com/dergraaf/avr-can-lib
+* David Harding for his version of the MCP2515 library
+  * http://forum.arduino.cc/index.php/topic,8730.0.html
+* Kyle Crockett CANduino library with 16Mhz oscillator
+  * http://code.google.com/p/canduino/
+* Nuno Alves for the help on Extended ID messaging
+* Stevenh for his work on library and all of the MCP research/work
+  * http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+* Collin Kidder (collin80) for his work on the Arduino Due CAN interface
+  * https://github.com/collin80/due_can
+* Daniel Kasamis (togglebit) both for his code at
   https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN as well as his
   DUE CANshield http://togglebit.net/product/arduino-due-can-shield/
-Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
-  https://github.com/coryjfowler/MCP2515_lib
-teachop for the FlexCAN library for the Teensy 3.1
-  https://github.com/teachop/FlexCAN_Library
+* Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
+  * https://github.com/coryjfowler/MCP2515_lib
+* teachop for the FlexCAN library for the Teensy 3.1
+  * https://github.com/teachop/FlexCAN_Library

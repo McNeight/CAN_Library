@@ -1,55 +1,59 @@
-/* Copyright (C) 2014
+/*
+    Copyright © 2007-2015 Fabian Greif, David Harding, Kyle Crockett,
+    Nuno Alves, Stevenh, Collin Kidder, Daniel Kasamis, Cory Fowler, teachop,
+    Pedro Cevallos, Neil McNeight
 
-   Contributors:  Pedro Cevallos & Neil McNeight
+    This file is part of CAN_Library.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
+    CAN_Library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 2.1 of the License, or
     (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
+    CAN_Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU Lesser General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
+    You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Acknowledgements:
-Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
-  http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
-  as well as his updates at https://github.com/dergraaf/avr-can-lib
-David Harding for his version of the MCP2515 library
-  http://forum.arduino.cc/index.php/topic,8730.0.html
-Kyle Crockett CANduino library with 16Mhz oscillator
-  http://code.google.com/p/canduino/
-Nuno Alves for the help on Extended ID messaging
-Stevenh for his work on library and all of the MCP research/work
-  http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
-Collin Kidder (collin80) for his work on the Arduino Due CAN interface
-  https://github.com/collin80/due_can
-Daniel Kasamis (togglebit) both for his code at
-  https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN as well as his
-  DUE CANshield http://togglebit.net/product/arduino-due-can-shield/
-Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
-  https://github.com/coryjfowler/MCP2515_lib
-teachop for the FlexCAN library for the Teensy 3.1
-  https://github.com/teachop/FlexCAN_Library
+  Fabian Greif for the initial libraries for MCP2515, SJA1000 and AT90CAN
+    http://www.kreatives-chaos.com/artikel/universelle-can-bibliothek
+    as well as his updates at https://github.com/dergraaf/avr-can-lib
+  David Harding for his version of the MCP2515 library
+    http://forum.arduino.cc/index.php/topic,8730.0.html
+  Kyle Crockett CANduino library with 16Mhz oscillator
+    http://code.google.com/p/canduino/
+  Nuno Alves for the help on Extended ID messaging
+  Stevenh for his work on library and all of the MCP research/work
+    http://modelrail.otenko.com/arduino/arduino-controller-area-network-can
+  Collin Kidder (collin80) for his work on the Arduino Due CAN interface
+    https://github.com/collin80/due_can
+  Daniel Kasamis (togglebit) both for his code at
+    https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN as well as his
+    DUE CANshield http://togglebit.net/product/arduino-due-can-shield/
+  Cory Fowler (coryjfowler) for 16 MHz bitrate timing information
+    https://github.com/coryjfowler/MCP2515_lib
+  teachop for the FlexCAN library for the Teensy 3.1
+    https://github.com/teachop/FlexCAN_Library
 
 -------------------------------------------------------------------------------
 Change Log
 
-DATE		VER		WHO			WHAT
+DATE      VER   WHO   WHAT
 07/07/13  0.1   PC    Modified and merge all MCP2515 libraries found. Stripped
                         away most unused functions and corrected MCP2515 defs
 09/12/13  0.2   PC    Added selectable CS SPI for CAN controller to use 1 IC
                         to control several mcp2515
-02/05/14	0.3		PC		Added filter and mask controls
+02/05/14  0.3   PC    Added filter and mask controls
 05/01/14  0.4   PC    Cleaned up functions, variables and added message
                         structures for J1939, CANopen and CAN.
-05/07/14	1.0		PC		Released Library to the public through GitHub
-06/18/14  1.9   NEM   Preparing a unified CAN library across three different
+05/07/14  1.0   PC    Released Library to the public through GitHub
+06/18/14  1.5   NEM   Preparing a unified CAN library across three different
                         CAN controllers
+06/14/15  1.6.0 NEM   Code cleanup and compatibility with Arduino 1.6.*
 -------------------------------------------------------------------------------
 
 */
@@ -113,17 +117,16 @@ DATE		VER		WHO			WHAT
 //
 typedef struct __attribute__((__packed__))
 {
-  uint32_t id : 29;       // if (ide == CAN_RECESSIVE) { extended ID }
-  //   else { standard ID }
-  uint8_t valid : 1;      // To avoid passing garbage frames around
-  uint8_t rtr : 1;        // Remote Transmission Request Bit (RTR)
+  uint32_t id      : 29;  // if (extended == CAN_RECESSIVE) { extended ID } else { standard ID }
+  uint8_t valid    : 1;   // To avoid passing garbage frames around
+  uint8_t rtr      : 1;   // Remote Transmission Request Bit (RTR)
   uint8_t extended : 1;   // Identifier Extension Bit (IDE)
   uint32_t fid;           // family ID
-  uint8_t priority : 4;	  // Priority but only important for TX frames and then only for special uses.
-  uint8_t length : 4;     // Data Length
+  uint8_t priority : 4;   // Priority but only important for TX frames and then only for special uses.
+  uint8_t length   : 4;   // Data Length
   uint16_t timeout;       // milliseconds, zero will disable waiting
-  uint8_t data[8]; 			  // Message data
-} CAN_Frame; // suffix of '_t' is reserved by POSIX for future use
+  uint8_t data[8];                        // Message data
+} CAN_Frame;              // suffix of '_t' is reserved by POSIX for future use
 
 
 // From http://www.cse.dmu.ac.uk/~eg/tele/CanbusIDandMask.html
@@ -172,22 +175,27 @@ typedef struct __attribute__((__packed__))
 // number of different tasks.
 typedef struct __attribute__((__packed__))
 {
-  uint32_t id : 29;       // if (ide == CAN_RECESSIVE) { extended ID }
-  //   else { standard ID }
-  uint8_t rtr : 1;        // Remote Transmission Request Bit (RTR)
+  uint32_t id      : 29;  // if (extended == CAN_RECESSIVE) { extended ID } else { standard ID }
+  uint8_t rtr      : 1;   // Remote Transmission Request Bit (RTR)
   uint8_t extended : 1;   // Identifier Extension Bit (IDE)
   uint8_t data[2];        // Filter / Mask for message data
-} CAN_Filter; // suffix of '_t' is reserved by POSIX for future use
+} CAN_Filter;             // suffix of '_t' is reserved by POSIX for future use
 
 
 class CANClass // Can't inherit from Stream
 {
   public:
+    // Initializes CAN communications.
     virtual void begin(uint32_t bitrate);
+    // Finishes CAN communications
     virtual void end();
+    // Check if message has been received on any of the buffers
     virtual uint8_t available();
+    // Receive CAN message and allows use of the message structure for easier message handling
     virtual CAN_Frame read();
+
     virtual void flush();
+    // Load and send CAN message.
     virtual uint8_t write(const CAN_Frame&);
 
     //CAN_Frame& operator=(const CAN_Frame&);
@@ -199,8 +207,11 @@ class CANClass // Can't inherit from Stream
 // Unable to use extern on a base class
 
 // It's time for #ifdef bingo!
-#if defined(ARDUINO_ARCH_AVR) && !defined(__MK20DX256__)
-//
+/**********************************************************/
+/*     8 bit AVR-based boards                             */
+/**********************************************************/
+#if defined(__AVR__)
+
 #if defined(__AVR_AT90CAN32__) || \
     defined(__AVR_AT90CAN64__) || \
     defined(__AVR_AT90CAN128__)
@@ -218,21 +229,34 @@ class CANClass // Can't inherit from Stream
 #define CAN_CONTROLLER_MCP2515 // SPI interface to MCP2515 chip
 #include <SPI.h>
 #include "CAN_MCP2515.h"
-//#elif defined(SJA1000) // SPI interface to SJA1000 chip
+//#elif defined(SJA1000) // 8-bit parallel interface to SJA1000 chip
 //#define CAN_CONTROLLER_SJA1000
-//#include <SPI.h>
 //#include "CAN_SJA1000.h"
 //#else
 //#error "Your SPI CAN controller is currently unsupported."
 //#endif // MCP2515 / SJA1000
 #endif // AT90 / M1 / C1 / SPI
 
-#elif defined(ARDUINO_ARCH_SAM) || defined(__SAM3X8E__) // Arduino Due
+/**********************************************************/
+/*     32 bit Arduino Due                                 */
+/**********************************************************/
+#elif defined(__arm__) && defined(__SAM3X8E__)
 #define CAN_CONTROLLER_SAM3X
 #include "CAN_SAM3X.h"
-#elif defined(__MK20DX256__) // Teensy 3.1
+/**********************************************************/
+/*     32 bit Teensy 3.0 and 3.1                          */
+/**********************************************************/
+#elif defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISK)
 #define CAN_CONTROLLER_K2X
 #include "CAN_K2X.h"
+/**********************************************************/
+/*     32 bit Teensy-LC                                   */
+/**********************************************************/
+#elif defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISL)
+// Assume an SPI interface to an MCP2515
+#define CAN_CONTROLLER_MCP2515 // SPI interface to MCP2515 chip
+#include <SPI.h>
+#include "CAN_MCP2515.h"
 #else
 #error "Your CPU & CAN controller are currently unsupported."
 #endif // ARDUINO_ARCH_*
