@@ -68,6 +68,8 @@ DATE      VER   WHO   WHAT
 #include <SPI.h>
 #include "CAN.h"
 
+#define MCP2515_SERIAL_DEBUG
+
 //SPI Interface functions
 #define MCP2515_SPI_RESET              0xC0
 #define MCP2515_SPI_READ               0x03
@@ -271,9 +273,9 @@ DATE      VER   WHO   WHAT
 #define MCP2515_TXP0      0
 
 // RXB0CTRL RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
-#define MCP2515_RXM1      6
-#define MCP2515_RXM0      5
-#define MCP2515_RXMn      0x60 // mask for Receive Buffer Operating mode bits
+#define MCP2515_RXM1E     6
+#define MCP2515_RXM0E     5
+#define MCP2515_RXMnE     0x60 // mask for Receive Buffer Operating mode bits
 #define MCP2515_RXRTR     3
 #define MCP2515_BUKT      2
 #define MCP2515_BUKT1     1
@@ -408,6 +410,7 @@ DATE      VER   WHO   WHAT
 #define MCP2515_TXnIE     0x1C // mask for Transmit Buffer Empty Interrupt Enable bits
 #define MCP2515_RX1IE     1
 #define MCP2515_RX0IE     0
+#define MCP2515_RXnIE     0x03 // mask for Receive Buffer Full Interrupt Enable bits
 
 // CANINTF INTERRUPT FLAG (ADDRESS: 2Ch)
 #define MCP2515_MERRF     7
@@ -458,6 +461,30 @@ class CAN_MCP2515 : public CANClass
     // Load and send message. No RTS needed.
     uint8_t write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t *data);
 
+    // Experimental
+    //
+    void setMask(uint8_t maskID, CAN_Filter mask);
+    //
+    inline void setMask(CAN_Filter mask)
+    {
+      setMask(0, mask);
+    }
+    //
+    void clearMask(uint8_t maskID = 0);
+    //
+    void setFilter(uint8_t filterID, CAN_Filter filter);
+    //
+    inline void setFilter(CAN_Filter filter)
+    {
+      setFilter(0, filter);
+    }
+    //
+    void clearFilter(uint8_t filterID = 0);
+    //
+    void enableRXInterrupt();
+    //
+    void disableRXInterrupt();
+
   private:
     uint8_t CS; //SPI CS is selectable through sketch
     void _init();
@@ -468,7 +495,7 @@ class CAN_MCP2515 : public CANClass
 
     void clearRxBuffers(); // clears all receive buffers
     void clearTxBuffers(); // clears all receive buffers
-    void clearFilters();   // clears all filters and masks
+    void disableFilterMask();   // clears all filters and masks
 
     // Make setting bitrate and mode only part of the constructor
     void setBitrate(uint32_t bitrate);//sets up CAN bit rate
@@ -486,8 +513,6 @@ class CAN_MCP2515 : public CANClass
 
     void enableRTSPins (); // Enable hardware request to send (RTS) pins if they are available. It allows messages to be send by driving MCP2515 RTS pins low.
     void setInterrupts(uint8_t mask, uint8_t writeVal); //Enable/disable interrupts
-    void setMask(uint8_t mask, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3); // Set Masks for filters
-    void setFilter(uint8_t filter, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3); //Set Receive filters
 
 };
 

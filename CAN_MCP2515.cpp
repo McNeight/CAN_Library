@@ -99,7 +99,7 @@ void CAN_MCP2515::begin(uint32_t bitrate, uint8_t mode)
   reset();//Set MCP2515 into Config mode by soft reset. Note MCP2515 is in Config mode by default at power up.
   clearRxBuffers();
   clearTxBuffers();
-  clearFilters();
+  //clearFilters();
   // enable Transmit Buffer Empty Interrupt Enable bits
   //enableInterrupts(MCP2515_TXnIE, MCP2515_TXnIE);
   setBitrate(bitrate); //Set CAN bit rate
@@ -274,10 +274,24 @@ uint8_t CAN_MCP2515::write(const CAN_Frame & message)
   SPI.transfer(TXBnEID8); //extended ID high bits
   SPI.transfer(TXBnEID0); //extended ID low bits
   SPI.transfer(TXBnDLC); //data length code
+#ifdef MCP2515_SERIAL_DEBUG
+  Serial.print("write2");
+#endif
   for (int i = 0; i < message.length; i++)   //load data buffer
   {
     SPI.transfer(message.data[i]);
+#ifdef MCP2515_SERIAL_DEBUG
+    Serial.print(',');
+    if (message.data[i] < 0x10) // If the data is less than 10 hex it will assign a zero to the front as leading zeros are ignored...
+    {
+      Serial.print('0');
+    }
+    Serial.print(message.data[i], HEX);
+#endif
   }
+#ifdef MCP2515_SERIAL_DEBUG
+  Serial.println();
+#endif
   digitalWrite(CS, HIGH);
   digitalWrite(CS, LOW);
   SPI.transfer(sendBuffer);
@@ -290,11 +304,28 @@ uint8_t CAN_MCP2515::write(const CAN_Frame & message)
 // Function to load and send any message. (J1939, CANopen, CAN). It assumes user knows what the ID is supposed to be
 uint8_t CAN_MCP2515::write(uint32_t ID, uint8_t frameType, uint8_t length, uint8_t * data) // changed from send() to write()
 {
+#ifdef MCP2515_SERIAL_DEBUG
+  Serial.print(F("write1"));
+  for (uint8_t i = 0; i < length; i++)
+  {
+    Serial.print(',');
+    if (data[i] < 0x10)                                 // If the data is less than 10 hex it will assign a zero to the front as leading zeros are ignored...
+    {
+      Serial.print('0');
+    }
+    Serial.print(data[i], HEX);                         // Displays message data
+  }
+  Serial.println();                                     // adds a line
+#endif
   CAN_Frame message_to_be_sent;
   message_to_be_sent.id = ID;
   message_to_be_sent.length = length;
   message_to_be_sent.extended = frameType;
-  memcpy(message_to_be_sent.data, data, sizeof(data));
+  //  memcpy(message_to_be_sent.data, data, sizeof(data));
+  for (uint8_t i = 0; i < length; i++)
+  {
+    message_to_be_sent.data[i] = data[i];
+  }
   return (write(message_to_be_sent));
 }
 
@@ -599,39 +630,241 @@ uint32_t CAN_MCP2515::getBitrate()
   }
 }
 
-//Turns RX filters/masks off. Will receive any message.
-void CAN_MCP2515::clearFilters()
+// Experimental
+//
+void CAN_MCP2515::setFilter(uint8_t filterID, CAN_Filter filter)
 {
-  modifyAddress(MCP2515_RXB0CTRL, MCP2515_RXMn, MCP2515_RXMn);
-  modifyAddress(MCP2515_RXB1CTRL, MCP2515_RXMn, MCP2515_RXMn);
-}
+  uint8_t RXFnSIDH, RXFnSIDL, RXFnEID8, RXFnEID0, filterAddress;
 
-//Set Masks for filters
-void CAN_MCP2515::setMask(uint8_t mask, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
-{
+  if (filterID == 0)
+  {
+    filterAddress = MCP2515_RXF0;
+  }
+  else if (filterID == 1)
+  {
+    filterAddress = MCP2515_RXF1;
+  }
+  else if (filterID == 2)
+  {
+    filterAddress = MCP2515_RXF2;
+  }
+  else if (filterID == 3)
+  {
+    filterAddress = MCP2515_RXF3;
+  }
+  else if (filterID == 4)
+  {
+    filterAddress = MCP2515_RXF4;
+  }
+  else if (filterID == 5)
+  {
+    filterAddress = MCP2515_RXF5;
+  }
+  else
+  {
+    return;
+  }
+
+  if (filter.extended == CAN_EXTENDED_FRAME)
+  {
+    //generate id bytes before SPI write
+    RXFnSIDH  = (filter.id >> 21);                      // SIDH<7:0> = ID<28:21>
+    RXFnSIDL  = ((filter.id >> 13) & MCP2515_SIDL_SID); // SIDL<7:5> = ID<20:18>
+    RXFnSIDL |= ((filter.id >> 16) & MCP2515_SIDL_EID); // SIDL<1:0> = ID<17:16>
+    bitSet(RXFnSIDL, MCP2515_EXIDE);
+    RXFnEID8  = (filter.id >> 8);                       // EID8<7:0> = ID<15:8>
+    RXFnEID0  = (filter.id >> 0);                       // EID0<7:0> = ID<7:0>
+  }
+  else if (filter.extended == CAN_STANDARD_FRAME)
+  {
+    RXFnSIDH = (filter.id >> 3);                        // SIDH<7:0> = ID<10:3>
+    RXFnSIDL = ((filter.id << 5) & MCP2515_SIDL_SID);   // SIDL<7:5> = ID<2:0>
+    RXFnEID8 = 0x00; // zero out extended ID registers
+    RXFnEID0 = 0x00; // zero out extended ID registers
+  }
+#ifdef MCP2515_SERIAL_DEBUG
+  Serial.print(F("setFilter():"));
+  Serial.print(filterAddress, HEX);
+  Serial.print(',');
+  Serial.print(filter.id, HEX);
+  Serial.print(',');
+  Serial.print(filter.extended, BIN);
+  Serial.println();                                     // adds a line
+#endif
+
   setMode(MCP2515_MODE_CONFIG);
   digitalWrite(CS, LOW);
-  SPI.transfer(mask);
-  SPI.transfer(b0);
-  SPI.transfer(b1);
-  SPI.transfer(b2);
-  SPI.transfer(b3);
+  SPI.transfer(filterID);
+  SPI.transfer(RXFnSIDH); //ID high bits
+  SPI.transfer(RXFnSIDL); //ID low bits
+  SPI.transfer(RXFnEID8); //extended ID high bits
+  SPI.transfer(RXFnEID0); //extended ID low bits
+  digitalWrite(CS, HIGH);
+  setMode(MCP2515_MODE_NORMAL);
+
+  return;
+}
+
+//
+void CAN_MCP2515::clearFilter(uint8_t filterID)
+{
+  uint8_t filterAddress;
+
+  if (filterID == 0)
+  {
+    filterAddress = MCP2515_RXF0;
+  }
+  else if (filterID == 1)
+  {
+    filterAddress = MCP2515_RXF1;
+  }
+  else if (filterID == 2)
+  {
+    filterAddress = MCP2515_RXF2;
+  }
+  else if (filterID == 3)
+  {
+    filterAddress = MCP2515_RXF3;
+  }
+  else if (filterID == 4)
+  {
+    filterAddress = MCP2515_RXF4;
+  }
+  else if (filterID == 5)
+  {
+    filterAddress = MCP2515_RXF5;
+  }
+  else
+  {
+    return;
+  }
+
+  setMode(MCP2515_MODE_CONFIG);
+  digitalWrite(CS, LOW);
+  SPI.transfer(filterAddress);
+  SPI.transfer(0x00); //ID high bits
+  SPI.transfer(0x00); //ID low bits
+  SPI.transfer(0x00); //extended ID high bits
+  SPI.transfer(0x00); //extended ID low bits
   digitalWrite(CS, HIGH);
   setMode(MCP2515_MODE_NORMAL);
 }
 
-// Set Receive Filters. Will think of a more user friendly way to set these in the future but for right now it works....
-void CAN_MCP2515::setFilter(uint8_t filter, uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
+//
+void CAN_MCP2515::setMask(uint8_t maskID, CAN_Filter mask)
 {
+  uint8_t RXMnSIDH, RXMnSIDL, RXMnEID8, RXMnEID0, maskAddress;
+
+  // RXB0CTRL – RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
+  modifyAddress(MCP2515_RXB0CTRL, MCP2515_RXMnE, 0x00);
+  // RXB1CTRL – RECEIVE BUFFER 1 CONTROL (ADDRESS: 70h)
+  modifyAddress(MCP2515_RXB1CTRL, MCP2515_RXMnE, 0x00);
+
+  if (maskID == 0)
+  {
+    maskAddress = MCP2515_RXM0;
+  }
+  else if (maskID == 1)
+  {
+    maskAddress = MCP2515_RXM1;
+  }
+  else
+  {
+    return;
+  }
+
+  if (mask.extended == CAN_EXTENDED_FRAME)
+  {
+    //generate id bytes before SPI write
+    RXMnSIDH  = (mask.id >> 21);                      // SIDH<7:0> = ID<28:21>
+    RXMnSIDL  = ((mask.id >> 13) & MCP2515_SIDL_SID); // SIDL<7:5> = ID<20:18>
+    RXMnSIDL |= ((mask.id >> 16) & MCP2515_SIDL_EID); // SIDL<1:0> = ID<17:16>
+    bitSet(RXMnSIDL, MCP2515_EXIDE);
+    RXMnEID8  = (mask.id >> 8);                       // EID8<7:0> = ID<15:8>
+    RXMnEID0  = (mask.id >> 0);                       // EID0<7:0> = ID<7:0>
+  }
+  else if (mask.extended == CAN_STANDARD_FRAME)
+  {
+    RXMnSIDH = (mask.id >> 3);                        // SIDH<7:0> = ID<10:3>
+    RXMnSIDL = ((mask.id << 5) & MCP2515_SIDL_SID);   // SIDL<7:5> = ID<2:0>
+    RXMnEID8 = 0x00; // zero out extended ID registers
+    RXMnEID0 = 0x00; // zero out extended ID registers
+  }
+#ifdef MCP2515_SERIAL_DEBUG
+  Serial.print(F("setMask():"));
+  Serial.print(maskAddress, HEX);
+  Serial.print(',');
+  Serial.print(mask.id, HEX);
+  Serial.print(',');
+  Serial.print(mask.extended, BIN);
+  Serial.println();                                     // adds a line
+#endif
+
   setMode(MCP2515_MODE_CONFIG);
   digitalWrite(CS, LOW);
-  SPI.transfer(filter);
-  SPI.transfer(b0);
-  SPI.transfer(b1);
-  SPI.transfer(b2);
-  SPI.transfer(b3);
+  SPI.transfer(maskAddress);
+  SPI.transfer(RXMnSIDH); //ID high bits
+  SPI.transfer(RXMnSIDL); //ID low bits
+  SPI.transfer(RXMnEID8); //extended ID high bits
+  SPI.transfer(RXMnEID0); //extended ID low bits
   digitalWrite(CS, HIGH);
   setMode(MCP2515_MODE_NORMAL);
+
+  return;
+}
+
+// Turns RX mask off
+void CAN_MCP2515::clearMask(uint8_t maskID)
+{
+  uint8_t maskAddress;
+
+  if (maskID == 0)
+  {
+    maskAddress = MCP2515_RXM0;
+  }
+  else if (maskID == 1)
+  {
+    maskAddress = MCP2515_RXM1;
+  }
+  else
+  {
+    return;
+  }
+
+  setMode(MCP2515_MODE_CONFIG);
+  digitalWrite(CS, LOW);
+  SPI.transfer(maskAddress);
+  SPI.transfer(0x00); //ID high bits
+  SPI.transfer(0x00); //ID low bits
+  SPI.transfer(0x00); //extended ID high bits
+  SPI.transfer(0x00); //extended ID low bits
+  digitalWrite(CS, HIGH);
+  setMode(MCP2515_MODE_NORMAL);
+
+  return;
+}
+
+//
+void CAN_MCP2515::enableRXInterrupt()
+{
+  // for now, just enable RX0 interrupt
+  modifyAddress(MCP2515_CANINTE, MCP2515_RXnIE, 0x03);
+}
+//
+void CAN_MCP2515::disableRXInterrupt()
+{
+  modifyAddress(MCP2515_CANINTE, MCP2515_RXnIE, 0x00);
+}
+
+
+// bit 6-5 RXM<1:0>: Receive Buffer Operating mode bits
+// 11 = Turn mask/filters off; receive any message
+void CAN_MCP2515::disableFilterMask()
+{
+  // RXB0CTRL – RECEIVE BUFFER 0 CONTROL (ADDRESS: 60h)
+  modifyAddress(MCP2515_RXB0CTRL, MCP2515_RXMnE, MCP2515_RXMnE);
+  // RXB1CTRL – RECEIVE BUFFER 1 CONTROL (ADDRESS: 70h)
+  modifyAddress(MCP2515_RXB1CTRL, MCP2515_RXMnE, MCP2515_RXMnE);
 }
 
 //At power up, MCP2515 buffers are not truly empty. There is random data in the registers
@@ -702,7 +935,6 @@ void CAN_MCP2515::enableRTSPins()
 // cleared if the respective condition still prevails.
 void CAN_MCP2515::setInterrupts(uint8_t mask, uint8_t writeVal)
 {
-  modifyAddress(MCP2515_CANINTE, mask, writeVal);
   /*
   Bit 7: MERRE: Message Error Interrupt Enable bit
   Bit 6: WAKIE: Wake-up Interrupt Enable bit
@@ -713,6 +945,7 @@ void CAN_MCP2515::setInterrupts(uint8_t mask, uint8_t writeVal)
   Bit 1: RX1IE: Receive Buffer 1 Full Interrupt Enable bit
   Bit 0: RX0IE: Receive Buffer 0 Full Interrupt Enable bit
   */
+  modifyAddress(MCP2515_CANINTE, mask, writeVal);
 }
 
 CAN_MCP2515 CAN(10); // Create CAN channel using pin 10 for SPI chip select

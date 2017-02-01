@@ -15,15 +15,17 @@ I've chosen to license my contributions to this library under the LGPL 2.1.
 After reading http://www.gnu.org/licenses/why-not-lgpl.html and considering
 the argument against using the LGPL, I'm using it for three reasons:
 
-#1 Compatibility with the LGPL 2.1 license used for Arduino's core libraries
-#2 Plenty of free and non-free CAN libraries already exist, meaning that it
-    does not "give free software any particular advantage"
-#3 Section 7 explicitly details how to properly credit source that is combined
-    with other source in a library
+1. Compatibility with the LGPL 2.1 license used for Arduino's core libraries
+2. Plenty of free and non-free CAN libraries already exist, meaning that it
+does not "give free software any particular advantage"
+3. Section 7 explicitly details how to properly credit source that is combined
+with other source in a library
 
-* avr-can-lib (https://github.com/dergraaf/avr-can-lib)
-  * Fabian Greif
-    * "2-clause BSD license" or FreeBSD license
+These are the sources I've pulled from so far
+
+* [avr-can-lib](https://github.com/dergraaf/avr-can-lib) by Fabian Greif
+  * "2-clause BSD license" or FreeBSD license
+
 ```Arduino
 /*
  * Copyright (c) 2007 Fabian Greif, Roboterclub Aachen e.V.
@@ -51,25 +53,22 @@ the argument against using the LGPL, I'm using it for three reasons:
  * SUCH DAMAGE.
  */
 ```
-* MCP2515 library (http://forum.arduino.cc/index.php/topic,8730.0.html)
-  * David Harding
-    * No license given, and no copyright listed.
 
-* CANduino library (http://code.google.com/p/canduino/)
-  * Kyle Crockett
-    * No license given, and no copyright listed.
+* [MCP2515 library](http://forum.arduino.cc/index.php/topic,8730.0.html) by David Harding
+  * No license given, and no copyright listed.
 
-* MCP2515 library (http://www.nunoalves.com/open_source/?p=475)
-  * Nuno Alves
-    * No license given, and no copyright listed.
+* [CANduino library](http://code.google.com/p/canduino/) by Kyle Crockett
+  * No license given, and no copyright listed.
 
-* MCP2515 library (http://modelrail.otenko.com/arduino/arduino-controller-area-network-can)
-  * Stevenh (real name?)
-    * No license given, and no copyright listed.
+* [MCP2515 library](http://www.nunoalves.com/open_source/?p=475) by Nuno Alves
+  * No license given, and no copyright listed.
 
-* due_can (https://github.com/collin80/due_can)
-  * Collin Kidder (collin80) for his work on the Arduino Due CAN interface
-    * GNU Lesser General Public License (LGPL) version 2.1
+* [MCP2515 library](http://modelrail.otenko.com/arduino/arduino-controller-area-network-can) by Stevenh (real name?)
+  * No license given, and no copyright listed.
+
+* [due_can](https://github.com/collin80/due_can) by Collin Kidder (collin80)
+  * GNU Lesser General Public License (LGPL) version 2.1
+    
 ```Arduino
 /*
   Copyright (c) 2013 Arduino.  All right reserved.
@@ -90,10 +89,10 @@ the argument against using the LGPL, I'm using it for three reasons:
 */
 ```
 
-* ArduinoDUE_OBD_FreeRunningCAN (https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN)
-  * Daniel Kasamis
-    * GNU Lesser General Public License (LGPL) version 2.1
-    * However, without a copyright statement
+* [ArduinoDUE_OBD_FreeRunningCAN](https://github.com/togglebit/ArduinoDUE_OBD_FreeRunningCAN) by Daniel Kasamis
+  * GNU Lesser General Public License (LGPL) version 2.1
+  * However, without a copyright statement
+    
 ```Arduino
 /*
   This library is free software; you can redistribute it and/or
@@ -112,9 +111,10 @@ the argument against using the LGPL, I'm using it for three reasons:
 */
 ```
 
-* MCP_CAN_lib (https://github.com/coryjfowler/MCP_CAN_lib)
-  * Cory Fowler
-    * GNU Lesser General Public License (LGPL) version 2.1
+* [MCP_CAN_lib](https://github.com/coryjfowler/MCP_CAN_lib) by Cory Fowler
+  * GNU Lesser General Public License (LGPL) version 2.1
+    
+```
 /*
   2012 Copyright (c) Seeed Technology Inc.  All right reserved.
   
@@ -136,7 +136,7 @@ the argument against using the LGPL, I'm using it for three reasons:
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-
   1301  USA
 */
+```
 
-* FlexCAN_Library (https://github.com/teachop/FlexCAN_Library)
-  * teachop (real name?)
-    * No license given, and no copyright listed.
+* [FlexCAN_Library](https://github.com/teachop/FlexCAN_Library) by teachop (real name?)
+  * No license given, and no copyright listed.

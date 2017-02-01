@@ -51,6 +51,10 @@ void readMessage()
 
     Serial.print(millis());
     Serial.print(F(",0x"));
+    if (message.id < 0x100) // If the data is less than 100 hex it will assign a zero to the front as leading zeros are ignored...
+    {
+      Serial.print('0');
+    }
     Serial.print(message.id, HEX); //display message ID
     Serial.print(',');
     Serial.print(message.rtr); //display message RTR

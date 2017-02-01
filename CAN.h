@@ -82,6 +82,7 @@ DATE      VER   WHO   WHAT
 #define CAN_EXTENDED_ID_MASK           0x1FFFFFFF
 
 //
+#define CAN_DATA_FIELD_LENGTH          8
 
 // Define the typical bitrate for CAN communication in kbps.
 #define CAN_BPS_1M                     1000000
@@ -125,7 +126,7 @@ typedef struct __attribute__((__packed__))
   uint8_t priority : 4;   // Priority but only important for TX frames and then only for special uses.
   uint8_t length   : 4;   // Data Length
   uint16_t timeout;       // milliseconds, zero will disable waiting
-  uint8_t data[8];                        // Message data
+  uint8_t data[CAN_DATA_FIELD_LENGTH]; // Message data
 } CAN_Frame;              // suffix of '_t' is reserved by POSIX for future use
 
 
@@ -199,6 +200,24 @@ class CANClass // Can't inherit from Stream
     virtual uint8_t write(const CAN_Frame&);
 
     //CAN_Frame& operator=(const CAN_Frame&);
+
+    // Experimental
+    //
+    virtual void setMask(uint8_t maskID, CAN_Filter mask);
+    //
+    virtual void setMask(CAN_Filter mask);
+    //
+    virtual void clearMask(uint8_t maskID = 0);
+    //
+    virtual void setFilter(uint8_t filterID, CAN_Filter filter);
+    //
+    virtual void setFilter(CAN_Filter filter);
+    //
+    virtual void clearFilter(uint8_t filterID = 0);
+    //
+    virtual void enableRXInterrupt();
+    //
+    virtual void disableRXInterrupt();
 };
 
 // Too many other libraries already define CAN.
